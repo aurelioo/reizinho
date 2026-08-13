@@ -946,7 +946,7 @@ function runDraw() {
 
 /* Link público do placar — GitHub Pages (repo aurelioo/reizinho-placar).
    Configurável em Configurações se hospedar em outro lugar. */
-const DEFAULT_PLACAR_URL = 'https://aurelioo.github.io/reizinho-placar/';
+const DEFAULT_PLACAR_URL = 'https://liga.rcode.pro/';
 
 function placarLink() {
   const base = (Sync.cfg().placarUrl || '').trim() || DEFAULT_PLACAR_URL;

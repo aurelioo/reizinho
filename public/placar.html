@@ -48,10 +48,29 @@
       animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: .3; } }
 
+    #banner {
+      margin: 0 .8rem .7rem; padding: .65rem .9rem;
+      border-radius: 12px; font-size: .85rem; line-height: 1.4;
+      cursor: pointer; user-select: none;
+    }
+    #banner.invite { background: rgb(56 189 248 / .12); color: var(--brand);
+      border: 1px dashed rgb(56 189 248 / .5); }
+    #banner.hot { background: var(--brand); color: var(--on-brand);
+      animation: banner-pulse 1.8s ease-in-out infinite; }
+    #banner.info { background: var(--panel); border: 1px solid var(--border); color: var(--ink); }
+    @keyframes banner-pulse { 50% { opacity: .82; } }
+
     .card {
       background: var(--panel); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
       margin-bottom: .7rem;
     }
+    .h2-badge {
+      float: right; padding: .1rem .55rem; border-radius: 999px;
+      font-size: .6rem; font-weight: 800;
+      background: var(--row); color: var(--ink);
+      letter-spacing: .05em;
+    }
+    .h2-badge.hot { background: var(--brand); color: var(--on-brand); }
     .card h2 {
       margin: 0; padding: .45rem .8rem; font-size: .66rem; font-weight: 700;
       letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
@@ -71,7 +90,7 @@
       font-size: .62rem; font-weight: 700; color: var(--muted); white-space: nowrap;
       text-transform: uppercase; min-width: 3.2rem;
     }
-    .g .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    .g .t { text-align: right; line-height: 1.3; }
     .g .t:last-child { text-align: left; }
     .g .t.win { color: var(--ok); font-weight: 700; }
     .g .t.lose { color: var(--muted); }
@@ -219,6 +238,7 @@
       </div>
       <span class="live"><i></i> ao vivo</span>
     </header>
+    <div id="banner" hidden></div>
     <div id="content"><div class="card"><div class="empty">Buscando placar…</div></div></div>
     <footer id="updated"></footer>
     <div id="sponsors"></div>
@@ -262,6 +282,8 @@
     const P = id => SNAP.db.players.find(p => p.id === id);
     const nameOf = id => P(id)?.name ?? '?';
     const team = ids => ids ? ids.map(nameOf).map(esc).join(' & ') : '—';
+    // um nome por linha nas listagens de jogos (nada escondido)
+    const teamLines = ids => ids ? ids.map(nameOf).map(esc).join('<br>') : '—';
     const deaccent = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
     function standings(group) {
@@ -326,9 +348,9 @@
       return `
         <div class="g ${playing ? 'playing' : ''}">
           <span class="tag">${tagOf(g)}${playing && court ? `<br><span class="court">${esc(court.name)}</span>` : ''}</span>
-          <span class="t ${winA ? 'win' : ''} ${winB ? 'lose' : ''}">${team(g.teamA)}</span>
+          <span class="t ${winA ? 'win' : ''} ${winB ? 'lose' : ''}">${teamLines(g.teamA)}</span>
           ${score}
-          <span class="t ${winB ? 'win' : ''} ${winA ? 'lose' : ''}">${team(g.teamB)}</span>
+          <span class="t ${winB ? 'win' : ''} ${winA ? 'lose' : ''}">${teamLines(g.teamB)}</span>
         </div>`;
     }
 
@@ -568,12 +590,19 @@
         const inA = g.teamA?.includes(p.id);
         const partner = (inA ? g.teamA : g.teamB)?.filter(x => x !== p.id).map(nameOf).join(' & ');
         const opp = team(inA ? g.teamB : g.teamA);
-        html += `<div class="card"><h2>Próximo jogo</h2>
+        const badge = next.posQueue === 1 ? 'Próximo'
+          : next.posQueue ? `${next.posQueue}º na fila` : 'A definir';
+        html += `<div class="card"><h2>Próximo jogo
+            <span class="h2-badge ${next.posQueue === 1 ? 'hot' : ''}">${badge}</span></h2>
           ${gameRow(g)}
-          <div class="hint-line">${g.teamA ?
-            `Com <b>${esc(partner ?? '?')}</b> vs ${opp}` : 'Adversários a definir'}${
-            next.posQueue ? ` · ${next.posQueue}º da fila` : ''}${
-            g.status === 'waiting' ? ' · aguardando definição' : ''}</div>
+          <div class="hint-line">${(() => {
+            if (!g.teamA) return 'Adversários a definir — aguardando os jogos anteriores.';
+            const ahead = (next.posQueue ?? 1) - 1;
+            const when = next.posQueue === 1 ? 'Sua partida é a próxima'
+              : next.posQueue ? `Sua partida será daqui a ${ahead} jogo${ahead > 1 ? 's' : ''}`
+              : 'Sua partida aguarda definição';
+            return `${when}, com <b>${esc(partner ?? '?')}</b> vs ${opp}.`;
+          })()}</div>
         </div>`;
       }
       if (games.length) {
@@ -609,6 +638,32 @@
             </div>`).join('')}
           ${q && !matches.length ? '<div class="empty">Nenhum atleta com esse nome.</div>' : ''}
         </div>`;
+    }
+
+    /* ---------- banner (convite / avisos do meu jogo) ---------- */
+    function bannerInfo() {
+      const me = state.meId ? P(state.meId) : null;
+      if (!me) {
+        return { cls: 'invite',
+          html: '⭐ <b>Acompanhe seu desempenho ao vivo</b> — toque aqui pra encontrar seu perfil' };
+      }
+      const inGame = g => g.teamA?.includes(me.id) || g.teamB?.includes(me.id);
+      const live = SNAP.db.games.find(g => g.status === 'playing' && inGame(g));
+      if (live) {
+        const court = SNAP.db.courts.find(c => c.id === live.courtId);
+        return { cls: 'hot', html: `🎾 <b>${esc(me.name)}, você está em quadra</b>${court ? ` — ${esc(court.name)}` : ''}!` };
+      }
+      const queue = SNAP.db.games.filter(g => g.status === 'queued');
+      const idx = queue.findIndex(inGame);
+      if (idx === 0) return { cls: 'hot', html: `📣 <b>${esc(me.name)}, seu jogo é o próximo a ser chamado!</b>` };
+      return null; // posição na fila fica só no Meu Perfil
+    }
+
+    function renderBanner() {
+      const el = $('#banner');
+      const info = bannerInfo();
+      el.hidden = !info;
+      if (info) { el.className = info.cls; el.innerHTML = info.html; }
     }
 
     /* ---------- render ---------- */
@@ -647,6 +702,7 @@
             `<img src="${esc(s.url)}" alt="${esc(c.name)}" loading="lazy">`).join('')}</div>
         </div>`).join('');
 
+      renderBanner();
       document.querySelectorAll('.tabbar button').forEach(b =>
         b.classList.toggle('on', b.dataset.tab === state.tab));
 
@@ -656,6 +712,9 @@
 
     /* ---------- eventos ---------- */
     document.addEventListener('click', e => {
+      if (e.target.closest('#banner')) {
+        state.tab = 'perfil'; state.viewId = null; render(); return;
+      }
       const tabBtn = e.target.closest('.tabbar button');
       if (tabBtn) { state.tab = tabBtn.dataset.tab; state.viewId = null; render(); return; }
 
