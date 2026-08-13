@@ -997,3 +997,10 @@ html.wa-dark .sp-logos img { background: #fff; padding: .35rem .6rem; }
 .undo-call:hover wa-icon { color: var(--coral); }
 .game-seq { display: inline-flex; align-items: center; gap: .25rem; }
 .m-court-tag { display: inline-flex; align-items: center; gap: .3rem; }
+
+/* tag de quadra dentro do bracket: bem compacta */
+.match-card wa-tag::part(base) {
+  font-size: .6rem; line-height: 1.1;
+  padding: .08rem .3rem; min-height: 0;
+}
+.match-card wa-tag wa-icon { font-size: .55rem; }
