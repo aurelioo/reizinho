@@ -33,25 +33,55 @@ const Sync = (() => {
     return import('https://esm.sh/@supabase/supabase-js@2');
   }
 
+  let userCache = null;
+
+  function rememberUser(session) {
+    userCache = session?.user ?? null;
+    // owner_id fica salvo na config — o link público usa mesmo offline
+    if (userCache?.id && cfg().ownerId !== userCache.id) {
+      saveCfg({ ...cfg(), ownerId: userCache.id });
+    }
+  }
+
   async function ensureClient() {
     if (client) return client;
     const { createClient } = await loadSupabase();
     const { url, key } = cfg();
     client = createClient(url, key);
+    client.auth.onAuthStateChange((_ev, session) => {
+      rememberUser(session);
+      if (typeof renderAll === 'function') renderAll();
+    });
     let { data: { session } } = await client.auth.getSession();
     if (!session) {
       const { data, error } = await client.auth.signInAnonymously();
       if (error) throw error;
       session = data.session;
     }
-    // owner_id fica salvo na config — o link público usa mesmo offline
-    if (session?.user?.id && cfg().ownerId !== session.user.id) {
-      saveCfg({ ...cfg(), ownerId: session.user.id });
-    }
+    rememberUser(session);
     return client;
   }
 
   const ownerId = () => cfg().ownerId ?? null;
+  const userEmail = () => (userCache && !userCache.is_anonymous) ? userCache.email : null;
+
+  /* Magic link: organizador loga com email — mesmo usuário em todos os
+     dispositivos = mesmos dados. Requer host http(s) (Pages), não file://. */
+  async function sendMagicLink(email) {
+    await ensureClient();
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: location.origin + location.pathname },
+    });
+    if (error) throw error;
+  }
+
+  async function signOut() {
+    await ensureClient();
+    await client.auth.signOut();
+    saveCfg({ ...cfg(), ownerId: null });
+    location.reload();
+  }
 
   function applyRemote(snapshot) {
     Object.assign(DB, snapshot.db);
@@ -135,5 +165,9 @@ const Sync = (() => {
     await client.storage.from('logos').remove([path]);
   }
 
-  return { start, push, cfg, saveCfg, enabled, ownerId, uploadLogo, removeLogo };
+  return {
+    start, push, cfg, saveCfg, enabled, ownerId,
+    uploadLogo, removeLogo,
+    sendMagicLink, signOut, userEmail,
+  };
 })();

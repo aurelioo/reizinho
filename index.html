@@ -240,6 +240,20 @@
               </wa-button>
               <span id="sync-status" class="muted"></span>
             </div>
+
+            <label class="field-label">Login do organizador (multi-dispositivo)</label>
+            <div class="sync-actions">
+              <wa-input id="sb-email" type="email" placeholder="seu@email.com" size="s" class="grow"></wa-input>
+              <wa-button size="s" appearance="outlined" data-action="magic-link">
+                <wa-icon slot="start" name="envelope"></wa-icon> Enviar magic link
+              </wa-button>
+            </div>
+            <div class="sync-actions" id="auth-row">
+              <span id="auth-status" class="muted"></span>
+              <wa-button size="s" appearance="plain" variant="danger" data-action="sign-out" id="btn-signout" hidden>
+                Sair
+              </wa-button>
+            </div>
             <p class="muted sync-hint">
               Rode <code>db/sync-snapshot.sql</code> no SQL Editor do projeto e ative
               Anonymous sign-in (Auth → Providers). Local-first: sem internet, tudo continua funcionando.

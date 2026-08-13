@@ -452,6 +452,11 @@ function renderSettings() {
   }
   if (document.activeElement?.id !== 'sb-placar') $('#sb-placar').value = sb.placarUrl ?? '';
   $('#sb-enabled').checked = !!sb.enabled;
+  const email = Sync.userEmail();
+  $('#auth-status').textContent = email
+    ? `Conectado como ${email}`
+    : 'Sem login — sessão anônima deste navegador.';
+  $('#btn-signout').hidden = !email;
 
   $('#tpl-list').innerHTML = DB.templates.map(t => {
     const inUse = DB.event.created && DB.event.templateId === t.id;
@@ -1916,6 +1921,28 @@ document.addEventListener('click', e => {
     Repo.removeSponsor(id);
     renderAll();
   }
+  if (act === 'magic-link') {
+    (async () => {
+      const email = ($('#sb-email').value || '').trim();
+      const st = $('#auth-status');
+      if (!email.includes('@')) { st.textContent = 'Informe um email válido.'; return; }
+      if (!Sync.cfg().url || !Sync.cfg().key) { st.textContent = 'Salve URL e key do Supabase primeiro.'; return; }
+      if (location.protocol === 'file:') {
+        st.textContent = 'Magic link só funciona no app hospedado (GitHub Pages) — file:// não recebe o redirect.';
+        return;
+      }
+      st.textContent = 'Enviando…';
+      try {
+        await Sync.sendMagicLink(email);
+        st.textContent = `Link enviado pra ${email} — abre teu email e clica.`;
+      } catch (err) {
+        st.textContent = `Erro: ${err.message ?? err}`;
+      }
+    })();
+  }
+  if (act === 'sign-out') {
+    if (confirm('Sair do login? Este navegador volta pra uma sessão anônima.')) Sync.signOut();
+  }
   if (act === 'sync-save') {
     Sync.saveCfg({
       ...Sync.cfg(),
@@ -2152,7 +2179,8 @@ setInterval(() => {
 (async () => {
   await Repo.hydrate();
   renderAll();
-  if (Sync.enabled()) Sync.start();
+  // start também quando voltando do magic link (tokens no hash)
+  if (Sync.enabled() || location.hash.includes('access_token')) Sync.start();
 })();
 
 document.addEventListener('keydown', e => {
