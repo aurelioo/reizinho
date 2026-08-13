@@ -897,7 +897,7 @@ function openDrawModal() {
     ? `${pool.length} atletas ${src} → ${pool.length / 4} grupo${pool.length > 4 ? 's' : ''} de 4.`
     : '';
   $('#draw-error').textContent = ok ? '' : `${pool.length} atletas ${src} — o sorteio precisa de múltiplo de 4.`;
-  $('#draw-names').textContent = pool.map(p => p.name).sort((a, b) => a.localeCompare(b)).join(', ');
+  $('#draw-names').textContent = pool.map(p => p.name).join(', ');
   $('#draw-error').hidden = ok;
   $('#draw-btn').disabled = !ok;
   $('#draw-btn').hidden = false;
