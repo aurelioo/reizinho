@@ -990,3 +990,10 @@ html.wa-dark .sp-logos img { background: #fff; padding: .35rem .6rem; }
 .slug-ind.ok { color: var(--wa-color-success-fill-loud, #15803d); }
 .slug-ind.bad { color: var(--wa-color-danger-fill-loud, #b91c1c); }
 .m-card .tb-names { margin: 0; line-height: 1.55; }
+
+/* botão de desfazer chamada (lista de jogos + mission control) */
+.undo-call::part(base) { padding: 0 .3rem; min-height: 1.5rem; }
+.undo-call wa-icon { font-size: .8rem; color: var(--ink-quiet); }
+.undo-call:hover wa-icon { color: var(--coral); }
+.game-seq { display: inline-flex; align-items: center; gap: .25rem; }
+.m-court-tag { display: inline-flex; align-items: center; gap: .3rem; }

@@ -634,9 +634,13 @@ function gameItemHtml(g, seq, chip, isNext) {
   const resB = done ? (g.scoreB > g.scoreA ? 'win' : 'lose') : '';
   const tA = g.teamA ? teamPill(g.teamA, resA) : `<span class="muted">${koSrcText(g, 'A')}</span>`;
   const tB = g.teamB ? teamPill(g.teamB, resB) : `<span class="muted">${koSrcText(g, 'B')}</span>`;
+  const undo = g.status === 'playing'
+    ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+         data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
+    : '';
   return `
     <div class="game-item ${g.status}">
-      <span class="game-seq">#${seq}</span>
+      <span class="game-seq">${undo}#${seq}</span>
       ${chip}
       <span class="game-team right">${tA}</span>
       <span class="game-score">${gameScoreCell(g)}</span>
@@ -719,9 +723,13 @@ function tiebreaksHtml() {
               <wa-icon slot="start" name="crown"></wa-icon> Informar vencedor</wa-button>`
           : `<wa-button size="s" variant="brand" data-action="call-tiebreak" data-tb="${tb.id}">
               <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar</wa-button>`;
+      const tbUndo = tb.called && !resolved
+        ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+             data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
+        : '';
       return `
         <div class="game-item tiebreak ${resolved ? 'done' : ''} ${tb.called && !resolved ? 'playing' : ''}">
-          <span class="game-seq">D${i + 1}</span>
+          <span class="game-seq">${tbUndo}D${i + 1}</span>
           <span class="chip chip-g">Grupo ${tb.group}</span>
           <wa-tag size="s" variant="${resolved ? 'neutral' : 'warning'}">${tb.type}${tb.called && !resolved ? ' · em quadra' : ''}</wa-tag>
           <span class="tb-players">${players}</span>
@@ -1528,7 +1536,11 @@ function renderMission() {
   const tbNow = DB.tiebreaks.filter(t => t.called && t.winnerId == null).map(tb => `
     <div class="m-card">
       <div class="m-row">
-        <wa-tag size="s" variant="warning">Desempate · Grupo ${tb.group}</wa-tag>
+        <span class="m-court-tag">
+          <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+            data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
+          <wa-tag size="s" variant="warning">Desempate · Grupo ${tb.group}</wa-tag>
+        </span>
       </div>
       <p class="tb-names">${tb.players.map(nameLink).join(' vs ')}</p>
       <wa-button size="s" variant="success" data-action="open-winner" data-tb="${tb.id}">
@@ -1544,7 +1556,11 @@ function renderMission() {
     return `
       <div class="m-card">
         <div class="m-row">
-          ${tag}
+          <span class="m-court-tag">
+            <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+              data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
+            ${tag}
+          </span>
           <span class="muted"><wa-icon name="clock"></wa-icon> ${g.elapsedMin} min</span>
         </div>
         <div class="m-match">
@@ -2079,6 +2095,14 @@ document.addEventListener('click', e => {
   if (act === 'settings-tab') showSettingsTab(el.dataset.stab);
   if (act === 'call-tiebreak') {
     Repo.callTiebreak(el.dataset.tb);
+    renderAll();
+  }
+  if (act === 'uncall-tiebreak') {
+    Repo.uncallTiebreak(el.dataset.tb);
+    renderAll();
+  }
+  if (act === 'uncall-game') {
+    Repo.uncallGame(el.dataset.game);
     renderAll();
   }
   if (act === 'delete-template') {

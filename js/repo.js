@@ -229,6 +229,24 @@ const Repo = (() => {
     if (tb) { tb.called = true; persist(); }
   }
 
+  function uncallTiebreak(id) {
+    const tb = DB.tiebreaks.find(t => t.id === id);
+    if (tb) { tb.called = false; persist(); }
+  }
+
+  /* Chamado sem querer: volta pra fila e libera a quadra */
+  function uncallGame(id) {
+    const g = DB.games.find(x => x.id === id);
+    if (!g || g.status !== 'playing') return;
+    g.status = 'queued';
+    g.scoreA = null;
+    g.scoreB = null;
+    delete g.courtId;
+    delete g.elapsedMin;
+    delete g.offCourt;
+    persist();
+  }
+
   return {
     hydrate, persist, wipe,
     saveEvent, saveSetup,
@@ -238,6 +256,6 @@ const Repo = (() => {
     addCourt, removeCourt,
     addAthlete, importAthletes, setPresence, setWithdrawn, deleteAllAthletes,
     applyDraw, addKnockoutMatches, resetScores, startNewStage,
-    callGame, saveScore, setTiebreakWinner, callTiebreak,
+    callGame, saveScore, setTiebreakWinner, callTiebreak, uncallTiebreak, uncallGame,
   };
 })();
