@@ -209,6 +209,20 @@ const Repo = (() => {
     persist();
   }
 
+  /* Placar lançado errado / no jogo errado: apaga e volta pra fila */
+  function clearScore(id) {
+    const g = DB.games.find(x => x.id === id);
+    if (!g) return;
+    g.status = 'queued';
+    g.scoreA = null;
+    g.scoreB = null;
+    delete g.courtId;
+    delete g.elapsedMin;
+    delete g.offCourt;
+    delete g.wo;
+    persist();
+  }
+
   function saveScore(id, scoreA, scoreB) {
     const g = DB.games.find(x => x.id === id);
     if (!g) return;
@@ -256,6 +270,6 @@ const Repo = (() => {
     addCourt, removeCourt,
     addAthlete, importAthletes, setPresence, setWithdrawn, deleteAllAthletes,
     applyDraw, addKnockoutMatches, resetScores, startNewStage,
-    callGame, saveScore, setTiebreakWinner, callTiebreak, uncallTiebreak, uncallGame,
+    callGame, saveScore, clearScore, setTiebreakWinner, callTiebreak, uncallTiebreak, uncallGame,
   };
 })();

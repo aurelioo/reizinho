@@ -545,6 +545,11 @@
       <wa-input id="score-b" type="number" min="0" max="9"></wa-input>
     </div>
     <p class="form-error" id="score-error" hidden>Placar inválido — não pode haver empate.</p>
+    <wa-button slot="footer" appearance="plain" variant="danger" id="btn-clear-score"
+      data-action="clear-score" hidden>
+      <wa-icon name="trash"></wa-icon>
+    </wa-button>
+    <wa-tooltip for="btn-clear-score">Remover placar — o jogo volta pra fila</wa-tooltip>
     <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
     <wa-button slot="footer" variant="success" data-action="save-score">
       <wa-icon slot="start" name="circle-check"></wa-icon> Salvar resultado

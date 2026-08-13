@@ -1892,6 +1892,7 @@ function openScoreDialog(gameId) {
   $('#score-a').placeholder = '';
   $('#score-b').placeholder = '';
   $('#score-error').hidden = true;
+  $('#btn-clear-score').hidden = g.status !== 'done'; // só com placar já lançado
   dlg.open = true;
 }
 
@@ -2105,6 +2106,11 @@ document.addEventListener('click', e => {
   }
   if (act === 'uncall-game') {
     Repo.uncallGame(el.dataset.game);
+    renderAll();
+  }
+  if (act === 'clear-score') {
+    Repo.clearScore($('#dlg-score').dataset.game);
+    $('#dlg-score').open = false;
     renderAll();
   }
   if (act === 'delete-template') {
