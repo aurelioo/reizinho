@@ -950,6 +950,8 @@ const DEFAULT_PLACAR_URL = 'https://liga.rcode.pro/';
 
 function placarLink() {
   const base = (Sync.cfg().placarUrl || '').trim() || DEFAULT_PLACAR_URL;
+  const slug = (DB.slug || '').trim();
+  if (slug) return base.replace(/index\.html$/, '').replace(/\/*$/, '/') + slug;
   const owner = Sync.ownerId();
   return owner ? `${base}${base.includes('?') ? '&' : '?'}e=${owner}` : base;
 }
@@ -2095,6 +2097,7 @@ document.addEventListener('click', e => {
   if (act === 'open-spotlight') openSpotlight();
   if (act === 'toggle-mission') $('.mission').classList.toggle('open');
   if (act === 'copy-athlete-link') {
+    $('#athlete-slug').value = DB.slug ?? '';
     $('#athlete-link-text').value = placarLink();
     $('#copy-link-label').textContent = 'Copiar link';
     $('#dlg-athlete-link').open = true;
@@ -2209,6 +2212,13 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('input', e => {
   if (e.target.id === 'spotlight-input') renderSpotlightResults(e.target.value);
+  if (e.target.id === 'athlete-slug') {
+    const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (v !== e.target.value) e.target.value = v;
+    DB.slug = v;
+    Repo.persist();
+    $('#athlete-link-text').value = placarLink();
+  }
 });
 
 $('#dlg-spotlight').addEventListener('wa-after-show', () => $('#spotlight-input').focus());

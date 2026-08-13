@@ -432,6 +432,11 @@
       busca o próprio nome pra ver estatísticas, próximo jogo, posição na fila e
       o que precisa pra classificar. Atualiza sozinho a cada placar lançado.
     </p>
+    <wa-input id="athlete-slug" label="Endereço personalizado" placeholder="aldeia"
+      autocapitalize="off" autocorrect="off" spellcheck="false"
+      hint="Só letras minúsculas, números e hífen. Deixe vazio pra usar o link técnico.">
+      <span slot="start" class="muted">liga.rcode.pro/</span>
+    </wa-input>
     <textarea class="summary-textarea" id="athlete-link-text" rows="3" readonly spellcheck="false"></textarea>
     <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Fechar</wa-button>
     <wa-button slot="footer" variant="brand" data-action="copy-athlete-link-confirm">

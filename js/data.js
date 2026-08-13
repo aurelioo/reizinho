@@ -4,6 +4,9 @@
    pontuação individual — vitórias + saldo de games. */
 
 const DB = {
+  /* Slug público da conta — link do atleta vira liga.rcode.pro/<slug> */
+  slug: '',
+
   /* Templates de configurações de torneio (gerenciados em Configurações) */
   templates: [
     {
