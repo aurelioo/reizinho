@@ -1397,9 +1397,12 @@ function openEventModal() {
   $('#ev-date').value = DB.event.date ?? '';
   $('#ev-season').innerHTML = '<wa-option value="">Sem temporada</wa-option>' +
     (DB.seasons ?? []).map(s => `<wa-option value="${s.id}">${esc(s.name)}</wa-option>`).join('');
-  $('#ev-season').value = String(DB.event.seasonId ?? '');
-  $('#ev-name').hidden = !!eventSeason();
-  const s = eventSeason();
+  // padrão: temporada do evento atual; senão a última criada
+  const lastSeason = (DB.seasons ?? []).at(-1);
+  const selId = DB.event.seasonId ?? lastSeason?.id ?? '';
+  $('#ev-season').value = String(selId);
+  const s = (DB.seasons ?? []).find(x => x.id === Number(selId)) ?? null;
+  $('#ev-name').hidden = !!s;
   if (s && !$('#ev-edition').value) $('#ev-edition').value = `${s.stages.length + 1}ª Etapa`;
   if (!$('#ev-date').value) $('#ev-date').value = new Date().toISOString().slice(0, 10);
   $('#dlg-event').dataset.tpl = DB.event.templateId ?? DB.templates[0]?.id;
