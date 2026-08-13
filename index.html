@@ -302,6 +302,14 @@
   <wa-dialog id="dlg-season" label="Temporada" style="--width: 640px;">
     <div class="form-stack">
       <wa-input id="se-name" label="Nome da temporada" placeholder="Liga Aldeia C Masc | 2026"></wa-input>
+      <wa-select id="se-level" label="Força / nível da liga" value="livre">
+        <wa-option value="livre">Livre (sem nível)</wa-option>
+        <wa-option value="A">A</wa-option>
+        <wa-option value="B">B</wa-option>
+        <wa-option value="C">C</wa-option>
+        <wa-option value="D">D</wa-option>
+        <wa-option value="iniciante">Iniciante</wa-option>
+      </wa-select>
       <label class="field-label">Pontuação por etapa</label>
       <div class="pts-grid">
         <wa-input id="se-p-part" label="Participação" type="number" value="250"></wa-input>

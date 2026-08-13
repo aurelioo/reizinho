@@ -392,7 +392,8 @@ function toggleDemoStage() {
 function renderSeasonSettings() {
   $('#season-list').innerHTML = (DB.seasons ?? []).map(s => `
     <div class="sponsor-row">
-      <span><strong>${esc(s.name)}</strong>
+      <span><strong>${esc(s.name)}</strong>${s.level && s.level !== 'livre'
+        ? ` <wa-tag size="s" variant="brand">${s.level === 'iniciante' ? 'Iniciante' : `Nível ${s.level}`}</wa-tag>` : ''}
         <small class="muted"> · ${s.stages.length} etapa${s.stages.length !== 1 ? 's' : ''}
         · ${[s.points.participation, s.points.knockout, s.points.fourth ?? s.points.semi, s.points.third ?? s.points.semi, s.points.final, s.points.champion].join('/')} pts${s.super16 ? ' · Super 16' : ''}</small></span>
       <span>
@@ -416,6 +417,7 @@ function openSeasonModal(seasonId = null) {
   const s = seasonId ? (DB.seasons ?? []).find(x => x.id === seasonId) : null;
   dlg.dataset.season = s ? s.id : '';
   $('#se-name').value = s?.name ?? '';
+  $('#se-level').value = s?.level ?? 'livre';
   $('#se-p-part').value = s?.points.participation ?? 250;
   $('#se-p-ko').value = s?.points.knockout ?? 400;
   $('#se-p-fourth').value = s?.points.fourth ?? s?.points.semi ?? 500;
@@ -434,6 +436,7 @@ function saveSeasonModal() {
   if (!name) { $('#se-error').hidden = false; return; }
   const patch = {
     name,
+    level: $('#se-level').value || 'livre',
     super16: $('#se-s16').checked,
     points: {
       participation: parseInt($('#se-p-part').value, 10) || 0,
