@@ -915,11 +915,15 @@ html.wa-dark .form-error { color: #fca5a5; }
 /* ====== gates (login / dados da conta) ====== */
 #auth-gate, #profile-gate {
   position: fixed; inset: 0; z-index: 80;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
   padding: 1rem;
+  overflow-y: auto;
   background: var(--wa-color-surface-lowered, #f4f1ea);
 }
 #auth-gate[hidden], #profile-gate[hidden] { display: none; }
+/* margin:auto centraliza E permite rolar quando o card passa da viewport
+   (align-items:center cortaria o topo sem scroll) */
+.auth-card { margin: auto; }
 .pf-row { display: flex; gap: .6rem; }
 .pf-uf { width: 5.5rem; }
 .auth-card {
@@ -979,4 +983,5 @@ html.wa-dark .form-error { color: #fca5a5; }
   }
   .snav-item { padding: .45rem .7rem; }
 }
-.pf-slug-status { margin: -.4rem 0 0; font-size: .78rem; min-height: 1em; }
+.pf-slug-status { margin: -.4rem 0 0; font-size: .78rem; }
+.pf-slug-status:empty { display: none; }
