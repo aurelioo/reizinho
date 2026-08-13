@@ -50,6 +50,14 @@ function ensureKO() {
 const nameLink = id =>
   `<span class="p-link" data-action="open-athlete" data-player="${id}">${esc(nameOf(id))}</span>`;
 
+/* Botão de desfazer chamada com tooltip (title não propaga no wa-button) */
+function undoBtnHtml(uid, attrs) {
+  uid = uid.replace(/[^\w-]/g, '-'); // ids de desempate têm ":" — inválido em seletor
+  return `<wa-button size="s" appearance="plain" class="undo-call" id="${uid}" ${attrs}>
+      <wa-icon name="rotate-left"></wa-icon></wa-button>
+    <wa-tooltip for="${uid}">Desfazer</wa-tooltip>`;
+}
+
 function teamHtml(ids) {
   return ids.map(nameLink).join(' & ');
 }
@@ -634,10 +642,7 @@ function gameItemHtml(g, seq, chip, isNext) {
   const resB = done ? (g.scoreB > g.scoreA ? 'win' : 'lose') : '';
   const tA = g.teamA ? teamPill(g.teamA, resA) : `<span class="muted">${koSrcText(g, 'A')}</span>`;
   const tB = g.teamB ? teamPill(g.teamB, resB) : `<span class="muted">${koSrcText(g, 'B')}</span>`;
-  const undo = g.status === 'playing'
-    ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
-         data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
-    : '';
+  const undo = g.status === 'playing' ? undoBtnHtml(`undo-g-${g.id}`, `data-action="uncall-game" data-game="${g.id}"`) : '';
   return `
     <div class="game-item ${g.status}">
       <span class="game-seq">${undo}#${seq}</span>
@@ -724,8 +729,7 @@ function tiebreaksHtml() {
           : `<wa-button size="s" variant="brand" data-action="call-tiebreak" data-tb="${tb.id}">
               <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar</wa-button>`;
       const tbUndo = tb.called && !resolved
-        ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
-             data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
+        ? undoBtnHtml(`undo-d-${tb.id}`, `data-action="uncall-tiebreak" data-tb="${tb.id}"`)
         : '';
       return `
         <div class="game-item tiebreak ${resolved ? 'done' : ''} ${tb.called && !resolved ? 'playing' : ''}">
@@ -1537,8 +1541,7 @@ function renderMission() {
     <div class="m-card">
       <div class="m-row">
         <span class="m-court-tag">
-          <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
-            data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
+          ${undoBtnHtml(`undo-mtb-${tb.id}`, `data-action="uncall-tiebreak" data-tb="${tb.id}"`)}
           <wa-tag size="s" variant="warning">Desempate · Grupo ${tb.group}</wa-tag>
         </span>
       </div>
@@ -1557,8 +1560,7 @@ function renderMission() {
       <div class="m-card">
         <div class="m-row">
           <span class="m-court-tag">
-            <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
-              data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
+            ${undoBtnHtml(`undo-mg-${g.id}`, `data-action="uncall-game" data-game="${g.id}"`)}
             ${tag}
           </span>
           <span class="muted"><wa-icon name="clock"></wa-icon> ${g.elapsedMin} min</span>
