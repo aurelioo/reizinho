@@ -1,0 +1,11 @@
+{
+  "name": "Reizinho — Gestão de Torneios",
+  "short_name": "Reizinho",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7f4ec",
+  "theme_color": "#0e7490",
+  "icons": [
+    { "src": "img/logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}

@@ -10,6 +10,9 @@ const DB = {
   /* Logo da conta (topo do menu) — Storage se sync ativo, senão data URL */
   brand: { url: '', path: '' },
 
+  /* Dados obrigatórios da conta (onboarding pós-cadastro) */
+  account: { name: '', cep: '', city: '', uf: '', address: '' },
+
   /* Templates de configurações de torneio (gerenciados em Configurações) */
   templates: [
     {

@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0e7490" />
   <title>Reizinho — Arena Aldeia</title>
 
   <!-- Web Awesome (CDN só no mockup; na extension o bundle será local por causa do CSP do MV3) -->
@@ -234,6 +236,12 @@
               <span id="auth-status" class="muted"></span>
               <wa-button size="s" appearance="plain" variant="danger" data-action="sign-out" id="btn-signout" hidden>
                 Sair
+              </wa-button>
+            </div>
+            <div class="sync-actions">
+              <span id="account-summary" class="muted"></span>
+              <wa-button size="s" appearance="outlined" data-action="edit-profile">
+                <wa-icon slot="start" name="pen"></wa-icon> Editar dados
               </wa-button>
             </div>
             <label class="field-label">Trocar senha</label>
@@ -511,6 +519,26 @@
       <wa-button appearance="plain" size="s" data-action="auth-offline" id="auth-offline" hidden>
         Sem internet — continuar offline
       </wa-button>
+    </div>
+  </div>
+
+  <!-- Gate de perfil: dados obrigatórios da conta — não fecha até salvar -->
+  <div id="profile-gate" hidden>
+    <div class="auth-card">
+      <div class="auth-badge"><wa-icon name="id-card"></wa-icon></div>
+      <h2>Dados da conta</h2>
+      <p class="muted">Complete seu cadastro pra continuar.</p>
+      <wa-input id="pf-name" label="Nome" placeholder="Seu nome ou o da arena"></wa-input>
+      <wa-input id="pf-cep" label="CEP" placeholder="00000-000" inputmode="numeric"
+        hint="Endereço, cidade e estado vêm sozinhos."></wa-input>
+      <wa-input id="pf-address" label="Endereço"></wa-input>
+      <div class="pf-row">
+        <wa-input id="pf-city" label="Cidade" class="grow"></wa-input>
+        <wa-input id="pf-uf" label="UF" class="pf-uf" maxlength="2"></wa-input>
+      </div>
+      <p class="auth-error" id="pf-error" hidden></p>
+      <wa-button variant="brand" size="l" data-action="profile-save">Salvar e continuar</wa-button>
+      <wa-button appearance="plain" size="s" data-action="profile-cancel" id="pf-cancel" hidden>Cancelar</wa-button>
     </div>
   </div>
 

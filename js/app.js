@@ -495,6 +495,10 @@ function renderSettings() {
     ? `Conectado como ${email}`
     : 'Sem login — modo offline deste navegador.';
   $('#btn-signout').hidden = !email;
+  const acc = DB.account ?? {};
+  $('#account-summary').textContent = acc.name
+    ? `${acc.name} — ${acc.city}/${acc.uf}`
+    : 'Cadastro incompleto.';
 
   $('#tpl-list').innerHTML = DB.templates.map(t => {
     const inUse = DB.event.created && DB.event.templateId === t.id;
@@ -1796,6 +1800,7 @@ function renderAll() {
   renderSponsorsFooter();
   renderBracket();
   renderMission();
+  updateProfileGate();
 }
 
 /* ---------- ações ---------- */
@@ -2010,6 +2015,18 @@ document.addEventListener('click', e => {
   if (act === 'auth-signup') authAction('up');
   if (act === 'auth-magic') authAction('magic');
   if (act === 'auth-offline') $('#auth-gate').hidden = true;
+  if (act === 'profile-save') saveProfile();
+  if (act === 'edit-profile') {
+    profileGateManual = true;
+    fillProfileInputs();
+    $('#pf-error').hidden = true;
+    $('#pf-cancel').hidden = false;
+    $('#profile-gate').hidden = false;
+  }
+  if (act === 'profile-cancel') {
+    profileGateManual = false;
+    $('#profile-gate').hidden = true;
+  }
   if (act === 'delete-template') {
     Repo.deleteTemplate(Number(el.dataset.tpl));
     renderAll();
@@ -2210,6 +2227,11 @@ document.addEventListener('keydown', e => {
 let slugCheckTimer = null;
 document.addEventListener('input', e => {
   if (e.target.id === 'spotlight-input') renderSpotlightResults(e.target.value);
+  if (e.target.id === 'pf-cep') {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+    e.target.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+    if (digits.length === 8) fetchCep(digits);
+  }
   if (e.target.id === 'athlete-slug') {
     const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (v !== e.target.value) e.target.value = v;
@@ -2253,28 +2275,25 @@ $('#brand-file').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
+  let brand;
   try {
-    let brand;
-    if (Sync.enabled()) {
-      const old = DB.brand?.path;
-      const up = await Sync.uploadLogo(file);
-      brand = { url: up.url, path: up.path };
-      if (old) Sync.removeLogo(old).catch(() => {});
-    } else {
-      const url = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result);
-        r.onerror = () => rej(r.error);
-        r.readAsDataURL(file);
-      });
-      brand = { url, path: '' };
-    }
-    DB.brand = brand;
-    Repo.persist();
-    renderAll();
-  } catch (err) {
-    alert(`Falha no upload da logo: ${err.message ?? err}`);
+    const old = DB.brand?.path;
+    const up = await Sync.uploadLogo(file);
+    brand = { url: up.url, path: up.path };
+    if (old) Sync.removeLogo(old).catch(() => {});
+  } catch {
+    // sem internet/Storage: guarda local como data URL (sincroniza no snapshot)
+    brand = await new Promise(res => {
+      const r = new FileReader();
+      r.onload = () => res({ url: r.result, path: '' });
+      r.onerror = () => res(null);
+      r.readAsDataURL(file);
+    });
+    if (!brand) { alert('Não deu pra ler o arquivo da logo.'); return; }
   }
+  DB.brand = brand;
+  Repo.persist();
+  renderAll();
 });
 
 /* Cancelou o sorteio no meio da animação: para o timer */
@@ -2305,6 +2324,75 @@ setInterval(() => {
   for (const g of playingGames()) { g.elapsedMin++; changed = true; }
   if (changed) { renderGamesList(); renderMission(); Repo.persist(); }
 }, 60_000);
+
+/* ---------- perfil da conta (gate obrigatório) ---------- */
+
+let profileGateManual = false;
+
+function profileComplete() {
+  const a = DB.account ?? {};
+  return !!(a.name && a.cep);
+}
+
+function fillProfileInputs() {
+  const a = DB.account ?? {};
+  $('#pf-name').value = a.name ?? '';
+  $('#pf-cep').value = a.cep ? `${a.cep.slice(0, 5)}-${a.cep.slice(5)}` : '';
+  $('#pf-address').value = a.address ?? '';
+  $('#pf-city').value = a.city ?? '';
+  $('#pf-uf').value = a.uf ?? '';
+}
+
+/* Mostra o gate sempre que há login sem cadastro completo — não fecha até salvar */
+function updateProfileGate() {
+  const gate = $('#profile-gate');
+  const mustShow = Sync.hasUser() && !profileComplete() && $('#auth-gate').hidden;
+  if (mustShow) {
+    if (gate.hidden) fillProfileInputs();
+    $('#pf-cancel').hidden = true;
+    gate.hidden = false;
+  } else if (!profileGateManual) {
+    gate.hidden = true;
+  }
+}
+
+async function fetchCep(cep) {
+  const err = $('#pf-error');
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const d = await r.json();
+    if (d.erro) {
+      err.textContent = 'CEP não encontrado — confira ou preencha o endereço na mão.';
+      err.hidden = false;
+      return;
+    }
+    err.hidden = true;
+    $('#pf-address').value = [d.logradouro, d.bairro].filter(Boolean).join(', ');
+    $('#pf-city').value = d.localidade ?? '';
+    $('#pf-uf').value = d.uf ?? '';
+  } catch {
+    err.textContent = 'Não deu pra consultar o CEP — preencha o endereço na mão.';
+    err.hidden = false;
+  }
+}
+
+function saveProfile() {
+  const name = $('#pf-name').value.trim();
+  const cep = $('#pf-cep').value.replace(/\D/g, '');
+  const city = $('#pf-city').value.trim();
+  const uf = $('#pf-uf').value.trim().toUpperCase();
+  const address = $('#pf-address').value.trim();
+  const err = $('#pf-error');
+  const fail = msg => { err.textContent = msg; err.hidden = false; };
+  err.hidden = true;
+  if (!name) return fail('Informe o nome.');
+  if (cep.length !== 8) return fail('CEP inválido — são 8 dígitos.');
+  if (!city || !uf) return fail('Cidade e estado não preenchidos — confira o CEP.');
+  DB.account = { name, cep, city, uf, address };
+  profileGateManual = false;
+  Repo.persist();
+  renderAll();
+}
 
 /* ---------- auth (gate de login) ---------- */
 
@@ -2340,6 +2428,11 @@ async function authAction(kind) {
 /* Boot: hidrata do IndexedDB; sem estado salvo, começa zerado.
    Auth obrigatório: sem sessão, o gate cobre o app (com escape offline). */
 if (localStorage.getItem('reizinho.dark')) document.documentElement.classList.add('wa-dark');
+
+// Offline-first: cacheia app + CDNs na primeira visita (só em http/https)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 
 (async () => {
   await Repo.hydrate();
