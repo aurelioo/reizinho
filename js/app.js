@@ -395,13 +395,60 @@ function renderSeasonSettings() {
       <span><strong>${esc(s.name)}</strong>
         <small class="muted"> · ${s.stages.length} etapa${s.stages.length !== 1 ? 's' : ''}
         · ${[s.points.participation, s.points.knockout, s.points.fourth ?? s.points.semi, s.points.third ?? s.points.semi, s.points.final, s.points.champion].join('/')} pts${s.super16 ? ' · Super 16' : ''}</small></span>
-      <span></span>
+      <span>
+        <wa-button size="s" appearance="plain" title="Editar temporada e patrocinadores"
+          data-action="open-season-modal" data-season="${s.id}">
+          <wa-icon name="pen"></wa-icon>
+        </wa-button>
+      </span>
       <wa-button size="s" appearance="plain" variant="danger" title="${s.stages.length ? 'Temporada com etapas — não dá pra excluir' : 'Excluir'}"
         data-action="season-delete" data-season="${s.id}" ${s.stages.length ? 'disabled' : ''}>
         <wa-icon name="trash"></wa-icon>
       </wa-button>
     </div>`).join('') ||
-    '<p class="muted center" style="padding:.75rem 0">Nenhuma temporada.</p>';
+    '<p class="muted center" style="padding:.75rem 0">Nenhuma temporada — crie a primeira.</p>';
+}
+
+/* Modal unificado: dados da temporada + pontuação + patrocinadores.
+   Sem data-season = criar; com = editar. */
+function openSeasonModal(seasonId = null) {
+  const dlg = $('#dlg-season');
+  const s = seasonId ? (DB.seasons ?? []).find(x => x.id === seasonId) : null;
+  dlg.dataset.season = s ? s.id : '';
+  $('#se-name').value = s?.name ?? '';
+  $('#se-p-part').value = s?.points.participation ?? 250;
+  $('#se-p-ko').value = s?.points.knockout ?? 400;
+  $('#se-p-fourth').value = s?.points.fourth ?? s?.points.semi ?? 500;
+  $('#se-p-third').value = s?.points.third ?? s?.points.semi ?? 550;
+  $('#se-p-final').value = s?.points.final ?? 750;
+  $('#se-p-champ').value = s?.points.champion ?? 1000;
+  $('#se-s16').checked = !!s?.super16;
+  $('#se-error').hidden = true;
+  $('#sp-status').textContent = '';
+  renderSponsorList();
+  dlg.open = true;
+}
+
+function saveSeasonModal() {
+  const name = ($('#se-name').value || '').trim();
+  if (!name) { $('#se-error').hidden = false; return; }
+  const patch = {
+    name,
+    super16: $('#se-s16').checked,
+    points: {
+      participation: parseInt($('#se-p-part').value, 10) || 0,
+      knockout: parseInt($('#se-p-ko').value, 10) || 0,
+      fourth: parseInt($('#se-p-fourth').value, 10) || 0,
+      third: parseInt($('#se-p-third').value, 10) || 0,
+      final: parseInt($('#se-p-final').value, 10) || 0,
+      champion: parseInt($('#se-p-champ').value, 10) || 0,
+    },
+  };
+  const id = Number($('#dlg-season').dataset.season);
+  if (id) Repo.updateSeason(id, patch);
+  else Repo.addSeason({ id: Date.now(), stages: [], ...patch });
+  $('#dlg-season').open = false;
+  renderAll();
 }
 
 /* ---------- patrocinadores / apoiadores ---------- */
@@ -499,10 +546,10 @@ function setupEmptyState() {
     return `
       <div class="empty-state">
         <span class="empty-icon"><wa-icon name="calendar-plus"></wa-icon></span>
-        <h3>Nenhum evento criado</h3>
-        <p class="muted">Informe nome, etapa e data pra começar.</p>
+        <h3>Nenhuma etapa criada</h3>
+        <p class="muted">Crie a etapa (vinculada à temporada) pra começar.</p>
         <wa-button variant="brand" size="l" data-action="open-event">
-          <wa-icon slot="start" name="calendar-plus"></wa-icon> Criar Evento
+          <wa-icon slot="start" name="calendar-plus"></wa-icon> Criar Etapa
         </wa-button>
       </div>`;
   }
@@ -1328,12 +1375,12 @@ function renderMissionSetup(stage) {
   const nCourts = DB.courts.length;
   const steps = [
     {
-      key: 'event', label: 'Criar evento',
+      key: 'event', label: 'Criar etapa',
       desc: DB.event.created
         ? [DB.event.name, DB.event.edition].filter(Boolean).join(' · ')
-        : 'Nome, etapa e data',
+        : 'Temporada, etapa e data',
       action: `<wa-button size="s" variant="brand" data-action="open-event">
-        <wa-icon slot="start" name="calendar-plus"></wa-icon> Criar Evento</wa-button>`,
+        <wa-icon slot="start" name="calendar-plus"></wa-icon> Criar Etapa</wa-button>`,
     },
     {
       key: 'athletes', label: 'Cadastrar atletas',
@@ -1837,6 +1884,12 @@ document.addEventListener('click', e => {
   if (act === 'delete-all-players') deleteAllPlayers();
   if (act === 'reset-scores') resetScores();
   if (act === 'open-event') {
+    if (!(DB.seasons ?? []).length && !DB.event.created) {
+      if (confirm('Ainda não existe temporada. Criar a temporada primeiro? (recomendado — as etapas somam pontos nela)')) {
+        openSeasonModal();
+        return;
+      }
+    }
     $('#ev-name').value = DB.event.name ?? '';
     $('#ev-edition').value = DB.event.edition ?? '';
     $('#ev-date').value = DB.event.date ?? '';
@@ -1864,27 +1917,8 @@ document.addEventListener('click', e => {
   if (act === 'wipe-local') {
     if (confirm('Apagar todos os dados salvos neste navegador?')) Repo.wipe();
   }
-  if (act === 'season-create') {
-    const name = ($('#se-name').value || '').trim();
-    if (!name) { $('#se-error').hidden = false; return; }
-    $('#se-error').hidden = true;
-    Repo.addSeason({
-      id: Date.now(),
-      name,
-      super16: $('#se-s16').checked,
-      points: {
-        participation: parseInt($('#se-p-part').value, 10) || 0,
-        knockout: parseInt($('#se-p-ko').value, 10) || 0,
-        fourth: parseInt($('#se-p-fourth').value, 10) || 0,
-        third: parseInt($('#se-p-third').value, 10) || 0,
-        final: parseInt($('#se-p-final').value, 10) || 0,
-        champion: parseInt($('#se-p-champ').value, 10) || 0,
-      },
-      stages: [],
-    });
-    $('#se-name').value = '';
-    renderAll();
-  }
+  if (act === 'open-season-modal') openSeasonModal(el.dataset.season ? Number(el.dataset.season) : null);
+  if (act === 'season-save') saveSeasonModal();
   if (act === 'season-delete') {
     Repo.deleteSeason(Number(el.dataset.season));
     renderAll();

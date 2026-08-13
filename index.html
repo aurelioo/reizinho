@@ -197,21 +197,9 @@
         <h3 class="section-title"><wa-icon name="ranking-star"></wa-icon> Temporadas</h3>
         <div class="panel sync-panel">
           <div class="form-stack">
-            <wa-input id="se-name" label="Nome da temporada" placeholder="Temporada 2026"></wa-input>
-            <label class="field-label">Pontuação por etapa</label>
-            <div class="pts-grid">
-              <wa-input id="se-p-part" label="Participação" type="number" value="250"></wa-input>
-              <wa-input id="se-p-ko" label="Mata-mata" type="number" value="400"></wa-input>
-              <wa-input id="se-p-fourth" label="4º lugar" type="number" value="500"></wa-input>
-              <wa-input id="se-p-third" label="3º lugar" type="number" value="550"></wa-input>
-              <wa-input id="se-p-final" label="Vice" type="number" value="750"></wa-input>
-              <wa-input id="se-p-champ" label="Campeão" type="number" value="1000"></wa-input>
-            </div>
-            <wa-checkbox id="se-s16">Tem Super 16 (segunda linha de corte)</wa-checkbox>
-            <p class="form-error" id="se-error" hidden>Informe o nome da temporada.</p>
             <div class="sync-actions">
-              <wa-button variant="brand" data-action="season-create">
-                <wa-icon slot="start" name="plus"></wa-icon> Criar temporada
+              <wa-button variant="brand" data-action="open-season-modal">
+                <wa-icon slot="start" name="plus"></wa-icon> Nova temporada
               </wa-button>
               <wa-button appearance="outlined" variant="warning" data-action="demo-stage"
                 title="Soma uma etapa simulada com seus atletas pra ver a Pontuação; clicar de novo remove">
@@ -261,25 +249,6 @@
           </div>
         </div>
 
-        <h3 class="section-title"><wa-icon name="handshake"></wa-icon> Patrocinadores &amp; Apoiadores</h3>
-        <div class="panel sync-panel">
-          <div class="form-stack">
-            <wa-input id="sp-category" label="Categoria (campo livre)"
-              placeholder="Patrocinador, Apoio, Parceiro…"></wa-input>
-            <label class="field-label" for="sp-file">Logo (imagem)</label>
-            <input type="file" id="sp-file" accept="image/*" class="file-input">
-            <div class="sync-actions">
-              <wa-button variant="brand" data-action="sponsor-upload">
-                <wa-icon slot="start" name="upload"></wa-icon> Enviar logo
-              </wa-button>
-              <span id="sp-status" class="muted"></span>
-            </div>
-            <p class="muted sync-hint">Sobe pro bucket <code>logos</code> do Supabase
-              (rode <code>db/logos-bucket.sql</code> uma vez). Aparecem no fim de todas as telas e no placar público.</p>
-          </div>
-          <div id="sponsor-list"></div>
-        </div>
-
         <h3 class="section-title"><wa-icon name="database"></wa-icon> Dados locais</h3>
         <wa-button appearance="outlined" variant="danger" data-action="wipe-local">
           <wa-icon slot="start" name="trash"></wa-icon> Limpar dados locais
@@ -320,7 +289,39 @@
   </button>
 
   <!-- ============ DIALOGS ============ -->
-  <wa-dialog id="dlg-event" label="Criar evento">
+  <wa-dialog id="dlg-season" label="Temporada" style="--width: 640px;">
+    <div class="form-stack">
+      <wa-input id="se-name" label="Nome da temporada" placeholder="Liga Aldeia C Masc | 2026"></wa-input>
+      <label class="field-label">Pontuação por etapa</label>
+      <div class="pts-grid">
+        <wa-input id="se-p-part" label="Participação" type="number" value="250"></wa-input>
+        <wa-input id="se-p-ko" label="Mata-mata" type="number" value="400"></wa-input>
+        <wa-input id="se-p-fourth" label="4º lugar" type="number" value="500"></wa-input>
+        <wa-input id="se-p-third" label="3º lugar" type="number" value="550"></wa-input>
+        <wa-input id="se-p-final" label="Vice" type="number" value="750"></wa-input>
+        <wa-input id="se-p-champ" label="Campeão" type="number" value="1000"></wa-input>
+      </div>
+      <wa-checkbox id="se-s16">Tem Super 16 (segunda linha de corte)</wa-checkbox>
+      <p class="form-error" id="se-error" hidden>Informe o nome da temporada.</p>
+
+      <label class="field-label">Patrocinadores &amp; Apoiadores</label>
+      <div class="sync-actions">
+        <wa-input id="sp-category" placeholder="Categoria: Patrocinador, Apoio…" size="s" class="grow"></wa-input>
+        <input type="file" id="sp-file" accept="image/*" class="file-input">
+        <wa-button size="s" appearance="outlined" data-action="sponsor-upload">
+          <wa-icon slot="start" name="upload"></wa-icon> Enviar
+        </wa-button>
+      </div>
+      <span id="sp-status" class="muted"></span>
+      <div id="sponsor-list"></div>
+    </div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="season-save">
+      <wa-icon slot="start" name="floppy-disk"></wa-icon> Salvar temporada
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-event" label="Criar etapa">
     <div class="form-stack">
       <wa-input id="ev-name" label="Nome do evento" placeholder="Reizinho de Quarta"></wa-input>
       <wa-select id="ev-season" label="Temporada" value=""></wa-select>
@@ -334,7 +335,7 @@
     </div>
     <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
     <wa-button slot="footer" variant="brand" data-action="save-event">
-      <wa-icon slot="start" name="calendar-plus"></wa-icon> Salvar evento
+      <wa-icon slot="start" name="calendar-plus"></wa-icon> Salvar etapa
     </wa-button>
   </wa-dialog>
 

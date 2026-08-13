@@ -72,6 +72,10 @@ const Repo = (() => {
   function saveSetup(patch) { Object.assign(DB.setup, patch); persist(); }
 
   function addSeason(s) { (DB.seasons ??= []).push(s); persist(); }
+  function updateSeason(id, patch) {
+    const s = (DB.seasons ?? []).find(x => x.id === id);
+    if (s) { Object.assign(s, patch); persist(); }
+  }
   function deleteSeason(id) { DB.seasons = (DB.seasons ?? []).filter(x => x.id !== id); persist(); }
   function addSeasonStage(seasonId, stage) {
     const s = (DB.seasons ?? []).find(x => x.id === seasonId);
@@ -211,7 +215,7 @@ const Repo = (() => {
     saveEvent, saveSetup,
     saveTemplate, deleteTemplate,
     addSponsor, removeSponsor,
-    addSeason, deleteSeason, addSeasonStage, popSeasonStage,
+    addSeason, updateSeason, deleteSeason, addSeasonStage, popSeasonStage,
     addCourt, removeCourt,
     addAthlete, importAthletes, setPresence, setWithdrawn, deleteAllAthletes,
     applyDraw, addKnockoutMatches, resetScores,
