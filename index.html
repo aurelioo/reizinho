@@ -410,14 +410,16 @@
   </wa-dialog>
 
   <wa-dialog id="dlg-draw" label="Sortear grupos" style="--width: 680px;">
+    <div class="draw-hero">
+      <span class="empty-icon"><wa-icon name="shuffle"></wa-icon></span>
+    </div>
     <p class="muted draw-summary" id="draw-summary"></p>
     <p class="form-error" id="draw-error" hidden></p>
     <div class="draw-grid" id="draw-grid"></div>
-    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
-    <wa-button slot="footer" variant="brand" id="draw-btn" data-action="run-draw">
-      <wa-icon slot="start" name="shuffle"></wa-icon> Sortear
+    <wa-button slot="footer" size="l" variant="brand" id="draw-btn" data-action="run-draw">
+      <wa-icon slot="start" name="shuffle"></wa-icon> Sortear Grupos
     </wa-button>
-    <wa-button slot="footer" variant="brand" id="draw-next" data-action="draw-next" hidden>
+    <wa-button slot="footer" size="l" variant="brand" id="draw-next" data-action="draw-next" hidden>
       Próximo <wa-icon slot="end" name="arrow-right"></wa-icon>
     </wa-button>
   </wa-dialog>

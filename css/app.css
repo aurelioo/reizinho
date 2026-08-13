@@ -873,3 +873,16 @@ html.wa-dark .form-error { color: #fca5a5; }
   font-size: .95rem; line-height: 1.35;
 }
 .champion-line wa-icon { color: var(--sun); font-size: 1.15rem; flex: none; }
+
+/* modal de sorteio: hero + CTA grande no rodapé, fechar só no X */
+#dlg-draw .draw-hero {
+  display: none; flex-direction: column; align-items: center;
+  padding: .75rem 0 .25rem;
+}
+#dlg-draw:has(#draw-grid:empty) .draw-hero { display: flex; }
+#dlg-draw .draw-summary { text-align: center; font-size: 1rem; }
+#dlg-draw .form-error { text-align: center; }
+#dlg-draw wa-button[slot="footer"] { width: 100%; }
+#draw-btn::part(base), #draw-next::part(base) {
+  justify-content: center; font-weight: 700;
+}
