@@ -797,7 +797,10 @@ html.wa-dark .form-error { color: #fca5a5; }
 .sp-logos { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
 .sp-logos img {
   height: 64px; max-width: 220px; object-fit: contain;
+  border-radius: 10px;
 }
+/* logos escuras/transparentes somem no dark — fundo branco sempre */
+html.wa-dark .sp-logos img { background: #fff; padding: .35rem .6rem; }
 
 /* ====== temporada / ranking ====== */
 
