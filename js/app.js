@@ -1916,7 +1916,7 @@ document.addEventListener('click', e => {
     openEventModal();
   }
   if (act === 'new-stage') {
-    if (!confirm('Iniciar nova etapa? Jogos, grupos e presenças são zerados — a pontuação da temporada fica salva.')) return;
+    if (!confirm('Iniciar nova etapa? Atletas, jogos e grupos são zerados — importe a lista da etapa; a pontuação da temporada fica salva.')) return;
     Repo.startNewStage();
     renderAll();
     openEventModal();

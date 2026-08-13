@@ -164,10 +164,10 @@ const Repo = (() => {
 
   function addKnockoutMatches(matches) { DB.games.push(...matches); persist(); }
 
-  /* Nova etapa da temporada: mantém atletas (zerando presença/grupo),
-     limpa jogos/desempates; quadras e temporada continuam */
+  /* Nova etapa da temporada: atletas zerados (a lista varia por etapa —
+     importa de novo), jogos/desempates limpos; quadras e temporada continuam */
   function startNewStage() {
-    DB.players.forEach(p => { p.present = false; p.group = null; delete p.withdrawn; });
+    DB.players = [];
     DB.games = [];
     DB.tiebreaks = [];
     GROUPS = [];
