@@ -860,7 +860,8 @@ html.wa-dark .form-error { color: #fca5a5; }
 
 /* CTA de nova etapa no topo do menu */
 .nav-cta {
-  background: var(--brand-soft); color: var(--brand);
+  background: var(--brand); color: #fff;
   font-weight: 700; margin-bottom: .35rem;
 }
-.nav-cta wa-icon { color: var(--brand); }
+.nav-cta:hover { background: #155e75; }
+.nav-cta wa-icon { color: #fff; }
