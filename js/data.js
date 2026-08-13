@@ -7,6 +7,9 @@ const DB = {
   /* Slug público da conta — link do atleta vira liga.rcode.pro/<slug> */
   slug: '',
 
+  /* Logo da conta (topo do menu) — Storage se sync ativo, senão data URL */
+  brand: { url: '', path: '' },
+
   /* Templates de configurações de torneio (gerenciados em Configurações) */
   templates: [
     {

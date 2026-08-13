@@ -62,11 +62,29 @@ h2, h3, h4 { margin: 0; }
 /* ====== logo (topo do menu) ====== */
 
 /* sangra o padding do nav — logo de borda a borda */
-.brand-logo {
-  display: block;
+.brand-logo-box {
+  position: relative;
   width: calc(100% + 1.5rem);
   margin: -1rem -.75rem .75rem;
+  cursor: pointer;
 }
+.brand-logo { display: block; width: 100%; }
+.brand-logo-ph {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .35rem; margin: 1rem .9rem 0; padding: 1.1rem 0;
+  border: 1.5px dashed var(--border); border-radius: 10px;
+  color: var(--ink-quiet); font-size: .8rem;
+}
+.brand-logo-ph wa-icon { font-size: 1.35rem; }
+.brand-logo-box:hover .brand-logo-ph { border-color: var(--brand); color: var(--brand); }
+.brand-remove {
+  position: absolute; top: .45rem; right: .45rem;
+  display: none; align-items: center; justify-content: center;
+  width: 1.6rem; height: 1.6rem; padding: 0;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: rgb(0 0 0 / .55); color: #fff; font-size: .75rem;
+}
+.brand-logo-box:hover .brand-remove:not([hidden]) { display: flex; }
 
 .chip {
   display: inline-flex; align-items: center; gap: .4rem;

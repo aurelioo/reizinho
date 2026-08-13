@@ -1779,10 +1779,20 @@ function renderHeader() {
   $('#print-sub').textContent = [DB.event.edition, eventDateFmt()].filter(Boolean).join(' · ');
 }
 
+function renderBrand() {
+  const url = DB.brand?.url || '';
+  const img = $('#brand-logo');
+  if (url && img.src !== url) img.src = url;
+  img.hidden = !url;
+  $('#brand-logo-ph').hidden = !!url;
+  $('.brand-remove').hidden = !url;
+}
+
 function renderAll() {
   ensureTiebreaks();
   ensureKO();
   Repo.persist(); // derivados (desempates/propagação de chave) também persistem
+  renderBrand();
   renderHeader();
   renderGamesList();
   renderPlayers();
@@ -2096,6 +2106,13 @@ document.addEventListener('click', e => {
   if (act === 'save-score') saveScore();
   if (act === 'open-spotlight') openSpotlight();
   if (act === 'toggle-mission') $('.mission').classList.toggle('open');
+  if (act === 'upload-brand') $('#brand-file').click();
+  if (act === 'remove-brand') {
+    if (DB.brand?.path) Sync.removeLogo(DB.brand.path).catch(() => {});
+    DB.brand = { url: '', path: '' };
+    Repo.persist();
+    renderAll();
+  }
   if (act === 'copy-athlete-link') {
     $('#athlete-slug').value = DB.slug ?? '';
     $('#athlete-link-text').value = placarLink();
@@ -2222,6 +2239,35 @@ document.addEventListener('input', e => {
 });
 
 $('#dlg-spotlight').addEventListener('wa-after-show', () => $('#spotlight-input').focus());
+
+/* Logo da conta: Storage (sync ativo) ou data URL local */
+$('#brand-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    let brand;
+    if (Sync.enabled()) {
+      const old = DB.brand?.path;
+      const up = await Sync.uploadLogo(file);
+      brand = { url: up.url, path: up.path };
+      if (old) Sync.removeLogo(old).catch(() => {});
+    } else {
+      const url = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.readAsDataURL(file);
+      });
+      brand = { url, path: '' };
+    }
+    DB.brand = brand;
+    Repo.persist();
+    renderAll();
+  } catch (err) {
+    alert(`Falha no upload da logo: ${err.message ?? err}`);
+  }
+});
 
 /* Cancelou o sorteio no meio da animação: para o timer */
 $('#dlg-draw').addEventListener('wa-hide', () => {

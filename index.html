@@ -17,7 +17,16 @@
 
     <!-- ============ MENU (sidebar esquerda) ============ -->
     <nav slot="navigation" class="app-nav">
-      <img class="brand-logo" src="img/logo.jpg" alt="Aldeia Beach Sports" />
+      <div class="brand-logo-box" data-action="upload-brand" title="Trocar logo">
+        <img class="brand-logo" id="brand-logo" alt="Logo" hidden />
+        <div class="brand-logo-ph" id="brand-logo-ph">
+          <wa-icon name="image"></wa-icon>
+          <span>Enviar logo</span>
+        </div>
+        <button class="brand-remove" type="button" data-action="remove-brand"
+          title="Remover logo" hidden><wa-icon name="xmark"></wa-icon></button>
+        <input type="file" id="brand-file" accept="image/*" hidden />
+      </div>
 
       <button class="nav-search" type="button" data-action="open-spotlight">
         <wa-icon name="magnifying-glass"></wa-icon>
