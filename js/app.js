@@ -1609,10 +1609,7 @@ function renderMission() {
                <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar para ${court.name}</wa-button>`
           : `<wa-button size="s" variant="brand" appearance="outlined" data-action="call-game" data-game="${next.id}">
                <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar — escolher quadra</wa-button>`}
-      </div>
-      <wa-button size="s" appearance="plain" data-action="nav" data-view="courts">
-        <wa-icon slot="start" name="plus"></wa-icon> Adicionar quadra
-      </wa-button>`;
+      </div>`;
   } else if (!inKo && allGroupsDone() && total) {
     const pending = DB.tiebreaks.filter(t => t.winnerId == null);
     nextBlock = pending.length ? `
@@ -1651,6 +1648,9 @@ function renderMission() {
     <div class="m-section">
       <span class="m-label"><wa-icon name="bullhorn"></wa-icon> Próximo a chamar</span>
       ${nextBlock}
+      <wa-button size="s" appearance="plain" data-action="nav" data-view="courts">
+        <wa-icon slot="start" name="plus"></wa-icon> Adicionar quadra
+      </wa-button>
     </div>`;
 }
 
