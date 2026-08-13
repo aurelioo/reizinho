@@ -2239,6 +2239,29 @@ document.addEventListener('keydown', e => {
 let slugCheckTimer = null;
 document.addEventListener('input', e => {
   if (e.target.id === 'spotlight-input') renderSpotlightResults(e.target.value);
+  if (e.target.id === 'pf-slug') {
+    const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (v !== e.target.value) e.target.value = v;
+    clearTimeout(slugCheckTimer);
+    const st = $('#pf-slug-status');
+    st.style.color = '';
+    if (!v) { st.textContent = ''; return; }
+    st.textContent = 'Verificando…';
+    slugCheckTimer = setTimeout(async () => {
+      try {
+        const taken = await Sync.slugTaken(v);
+        if (v !== $('#pf-slug').value) return;
+        st.textContent = taken
+          ? `"${v}" já está em uso — escolha outro.`
+          : `liga.rcode.pro/${v} disponível ✓`;
+        st.style.color = taken
+          ? 'var(--wa-color-danger-fill-loud, #b91c1c)'
+          : 'var(--wa-color-success-fill-loud, #15803d)';
+      } catch {
+        st.textContent = '';
+      }
+    }, 450);
+  }
   if (e.target.id === 'pf-cep') {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
     e.target.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
@@ -2343,12 +2366,14 @@ let profileGateManual = false;
 
 function profileComplete() {
   const a = DB.account ?? {};
-  return !!(a.name && a.cep);
+  return !!(a.name && a.cep && DB.slug);
 }
 
 function fillProfileInputs() {
   const a = DB.account ?? {};
   $('#pf-name').value = a.name ?? '';
+  $('#pf-slug').value = DB.slug ?? '';
+  $('#pf-slug-status').textContent = '';
   $('#pf-cep').value = a.cep ? `${a.cep.slice(0, 5)}-${a.cep.slice(5)}` : '';
   $('#pf-address').value = a.address ?? '';
   $('#pf-city').value = a.city ?? '';
@@ -2388,8 +2413,9 @@ async function fetchCep(cep) {
   }
 }
 
-function saveProfile() {
+async function saveProfile() {
   const name = $('#pf-name').value.trim();
+  const slug = $('#pf-slug').value.trim();
   const cep = $('#pf-cep').value.replace(/\D/g, '');
   const city = $('#pf-city').value.trim();
   const uf = $('#pf-uf').value.trim().toUpperCase();
@@ -2398,8 +2424,15 @@ function saveProfile() {
   const fail = msg => { err.textContent = msg; err.hidden = false; };
   err.hidden = true;
   if (!name) return fail('Informe o nome.');
+  if (!/^[a-z0-9-]{2,40}$/.test(slug)) return fail('Escolha o endereço do placar — mínimo 2 caracteres.');
   if (cep.length !== 8) return fail('CEP inválido — são 8 dígitos.');
   if (!city || !uf) return fail('Cidade e estado não preenchidos — confira o CEP.');
+  if (slug !== DB.slug) {
+    try {
+      if (await Sync.slugTaken(slug)) return fail(`"${slug}" já está em uso por outra conta — escolha outro.`);
+    } catch { /* offline: o unique index do banco barra duplicado no sync */ }
+  }
+  DB.slug = slug;
   DB.account = { name, cep, city, uf, address };
   profileGateManual = false;
   Repo.persist();

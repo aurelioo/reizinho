@@ -577,6 +577,12 @@
       <h2>Dados da conta</h2>
       <p class="muted">Complete seu cadastro pra continuar.</p>
       <wa-input id="pf-name" label="Nome" placeholder="Seu nome ou o da arena"></wa-input>
+      <wa-input id="pf-slug" label="Endereço do placar" placeholder="minha-arena"
+        autocapitalize="off" autocorrect="off" spellcheck="false"
+        hint="Link público que os atletas acessam. Só minúsculas, números e hífen.">
+        <span slot="start" class="muted">liga.rcode.pro/</span>
+      </wa-input>
+      <p class="muted pf-slug-status" id="pf-slug-status"></p>
       <wa-input id="pf-cep" label="CEP" placeholder="00000-000" inputmode="numeric"
         hint="Endereço, cidade e estado vêm sozinhos."></wa-input>
       <wa-input id="pf-address" label="Endereço"></wa-input>
