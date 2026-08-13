@@ -860,8 +860,9 @@ html.wa-dark .form-error { color: #fca5a5; }
 
 /* CTA de nova etapa no topo do menu */
 .nav-cta {
-  background: var(--brand); color: #fff;
+  background: var(--wa-color-brand-fill-loud, var(--wa-color-fill-loud, var(--brand)));
+  color: var(--wa-color-brand-on-loud, #fff);
   font-weight: 700; margin-bottom: .35rem;
 }
-.nav-cta:hover { background: #155e75; }
-.nav-cta wa-icon { color: #fff; }
+.nav-cta:hover { filter: brightness(.92); background: var(--wa-color-brand-fill-loud, var(--wa-color-fill-loud, var(--brand))); }
+.nav-cta wa-icon { color: inherit; }
