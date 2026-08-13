@@ -490,8 +490,8 @@
       autocapitalize="off" autocorrect="off" spellcheck="false"
       hint="Só letras minúsculas, números e hífen. Deixe vazio pra usar o link técnico.">
       <span slot="start" class="muted">liga.rcode.pro/</span>
+      <span slot="end" class="slug-ind" id="slug-ind"></span>
     </wa-input>
-    <p class="muted" id="slug-status"></p>
     <textarea class="summary-textarea" id="athlete-link-text" rows="3" readonly spellcheck="false"></textarea>
     <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Fechar</wa-button>
     <wa-button slot="footer" variant="brand" data-action="copy-athlete-link-confirm">
@@ -581,8 +581,8 @@
         autocapitalize="off" autocorrect="off" spellcheck="false"
         hint="Link público que os atletas acessam. Só minúsculas, números e hífen.">
         <span slot="start" class="muted">liga.rcode.pro/</span>
+        <span slot="end" class="slug-ind" id="pf-slug-ind"></span>
       </wa-input>
-      <p class="muted pf-slug-status" id="pf-slug-status"></p>
       <wa-input id="pf-cep" label="CEP" placeholder="00000-000" inputmode="numeric"
         hint="Endereço, cidade e estado vêm sozinhos."></wa-input>
       <wa-input id="pf-address" label="Endereço"></wa-input>

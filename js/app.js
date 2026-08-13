@@ -2129,6 +2129,7 @@ document.addEventListener('click', e => {
   }
   if (act === 'copy-athlete-link') {
     $('#athlete-slug').value = DB.slug ?? '';
+    setSlugInd($('#slug-ind'), '');
     $('#athlete-link-text').value = placarLink();
     $('#copy-link-label').textContent = 'Copiar link';
     $('#dlg-athlete-link').open = true;
@@ -2242,28 +2243,29 @@ document.addEventListener('keydown', e => {
 });
 
 let slugCheckTimer = null;
+
+/* Indicador compacto no fim do input de slug: '' | checking | ok | bad */
+function setSlugInd(el, state) {
+  el.className = `slug-ind${state === 'ok' ? ' ok' : state === 'bad' ? ' bad' : ''}`;
+  el.textContent = { checking: '…', ok: '✓', bad: '✕' }[state] ?? '';
+}
+
 document.addEventListener('input', e => {
   if (e.target.id === 'spotlight-input') renderSpotlightResults(e.target.value);
   if (e.target.id === 'pf-slug') {
     const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (v !== e.target.value) e.target.value = v;
     clearTimeout(slugCheckTimer);
-    const st = $('#pf-slug-status');
-    st.style.color = '';
-    if (!v) { st.textContent = ''; return; }
-    st.textContent = 'Verificando…';
+    const ind = $('#pf-slug-ind');
+    if (!v) { setSlugInd(ind, ''); return; }
+    setSlugInd(ind, 'checking');
     slugCheckTimer = setTimeout(async () => {
       try {
         const taken = await Sync.slugTaken(v);
         if (v !== $('#pf-slug').value) return;
-        st.textContent = taken
-          ? `"${v}" já está em uso — escolha outro.`
-          : `liga.rcode.pro/${v} disponível ✓`;
-        st.style.color = taken
-          ? 'var(--wa-color-danger-fill-loud, #b91c1c)'
-          : 'var(--wa-color-success-fill-loud, #15803d)';
+        setSlugInd(ind, taken ? 'bad' : 'ok');
       } catch {
-        st.textContent = '';
+        setSlugInd(ind, '');
       }
     }, 450);
   }
@@ -2276,31 +2278,26 @@ document.addEventListener('input', e => {
     const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (v !== e.target.value) e.target.value = v;
     clearTimeout(slugCheckTimer);
-    const st = $('#slug-status');
+    const ind = $('#slug-ind');
     if (!v) {
       DB.slug = '';
       Repo.persist();
       $('#athlete-link-text').value = placarLink();
-      st.textContent = '';
+      setSlugInd(ind, '');
       return;
     }
-    st.textContent = 'Verificando…';
-    st.style.color = '';
+    setSlugInd(ind, 'checking');
     slugCheckTimer = setTimeout(async () => {
+      let taken = false;
       try {
-        const taken = await Sync.slugTaken(v);
+        taken = await Sync.slugTaken(v);
         if (v !== $('#athlete-slug').value) return; // usuário continuou digitando
-        if (taken) {
-          st.textContent = `"${v}" já está em uso por outra conta — escolha outro.`;
-          st.style.color = 'var(--wa-color-danger-fill-loud, #b91c1c)';
-          return; // não salva
-        }
-        st.textContent = `"${v}" disponível ✓`;
-        st.style.color = 'var(--wa-color-success-fill-loud, #15803d)';
+        setSlugInd(ind, taken ? 'bad' : 'ok');
       } catch {
-        st.textContent = 'Sem conexão pra verificar — salvo mesmo assim (o servidor barra duplicado).';
-        st.style.color = '';
+        // offline: salva mesmo assim — o unique index do banco barra duplicado
+        setSlugInd(ind, '');
       }
+      if (taken) return; // não salva
       DB.slug = v;
       Repo.persist();
       $('#athlete-link-text').value = placarLink();
@@ -2378,7 +2375,7 @@ function fillProfileInputs() {
   const a = DB.account ?? {};
   $('#pf-name').value = a.name ?? '';
   $('#pf-slug').value = DB.slug ?? '';
-  $('#pf-slug-status').textContent = '';
+  setSlugInd($('#pf-slug-ind'), '');
   $('#pf-cep').value = a.cep ? `${a.cep.slice(0, 5)}-${a.cep.slice(5)}` : '';
   $('#pf-address').value = a.address ?? '';
   $('#pf-city').value = a.city ?? '';

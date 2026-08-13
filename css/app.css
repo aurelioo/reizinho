@@ -983,5 +983,6 @@ html.wa-dark .form-error { color: #fca5a5; }
   }
   .snav-item { padding: .45rem .7rem; }
 }
-.pf-slug-status { margin: -.4rem 0 0; font-size: .78rem; }
-.pf-slug-status:empty { display: none; }
+.slug-ind { font-weight: 700; font-size: .9rem; }
+.slug-ind.ok { color: var(--wa-color-success-fill-loud, #15803d); }
+.slug-ind.bad { color: var(--wa-color-danger-fill-loud, #b91c1c); }
