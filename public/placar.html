@@ -277,12 +277,29 @@
         .filter(s => s && s !== 'reizinho-placar' && !s.endsWith('.html'));
       return /^[a-z0-9-]{2,40}$/.test(seg[0] ?? '') ? seg[0] : null;
     })();
+    // me = {id, name} — o nome valida contra o snapshot (id sozinho
+    // apontaria pra outro atleta ao trocar de liga)
+    const savedMe = (() => {
+      try { return JSON.parse(localStorage.getItem('placar.me')) ?? null; }
+      catch { return null; }
+    })();
     const state = {
       tab: 'jogos',
-      meId: Number(localStorage.getItem('placar.me')) || null,
+      meId: savedMe?.id ?? null,
+      meName: savedMe?.name ?? null,
       viewId: null,      // perfil de outro atleta (tap na lista)
       search: '',
     };
+
+    function validateMe() {
+      if (!state.meId) return;
+      const p = SNAP?.db?.players?.find(x => x.id === state.meId);
+      if (!p || p.name !== state.meName) {
+        state.meId = null;
+        state.meName = null;
+        localStorage.removeItem('placar.me');
+      }
+    }
 
     const $ = s => document.querySelector(s);
     const esc = s => String(s).replace(/[&<>"']/g, c =>
@@ -729,12 +746,13 @@
       const act = e.target.closest('[data-action]');
       if (act?.dataset.action === 'sou-eu') {
         state.meId = Number(act.dataset.id);
-        localStorage.setItem('placar.me', state.meId);
+        state.meName = P(state.meId)?.name ?? '';
+        localStorage.setItem('placar.me', JSON.stringify({ id: state.meId, name: state.meName }));
         state.viewId = null; state.tab = 'perfil';
         render(); return;
       }
       if (act?.dataset.action === 'trocar') {
-        state.meId = null; state.search = '';
+        state.meId = null; state.meName = null; state.search = '';
         localStorage.removeItem('placar.me');
         render(); return;
       }
@@ -802,6 +820,7 @@
         return;
       }
       SNAP = data.data;
+      validateMe();
       subscribeOnce(data.owner_id);
       render();
       maybeSplash();
@@ -816,7 +835,7 @@
           { event: '*', schema: 'public', table: 'event_snapshots',
             ...(ownerId ? { filter: `owner_id=eq.${ownerId}` } : {}) },
           payload => {
-            if (payload.new?.data) { SNAP = payload.new.data; render(); }
+            if (payload.new?.data) { SNAP = payload.new.data; validateMe(); render(); }
           })
         .subscribe();
     }

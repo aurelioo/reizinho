@@ -2207,14 +2207,42 @@ document.addEventListener('keydown', e => {
   }
 });
 
+let slugCheckTimer = null;
 document.addEventListener('input', e => {
   if (e.target.id === 'spotlight-input') renderSpotlightResults(e.target.value);
   if (e.target.id === 'athlete-slug') {
     const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (v !== e.target.value) e.target.value = v;
-    DB.slug = v;
-    Repo.persist();
-    $('#athlete-link-text').value = placarLink();
+    clearTimeout(slugCheckTimer);
+    const st = $('#slug-status');
+    if (!v) {
+      DB.slug = '';
+      Repo.persist();
+      $('#athlete-link-text').value = placarLink();
+      st.textContent = '';
+      return;
+    }
+    st.textContent = 'Verificando…';
+    st.style.color = '';
+    slugCheckTimer = setTimeout(async () => {
+      try {
+        const taken = await Sync.slugTaken(v);
+        if (v !== $('#athlete-slug').value) return; // usuário continuou digitando
+        if (taken) {
+          st.textContent = `"${v}" já está em uso por outra conta — escolha outro.`;
+          st.style.color = 'var(--wa-color-danger-fill-loud, #b91c1c)';
+          return; // não salva
+        }
+        st.textContent = `"${v}" disponível ✓`;
+        st.style.color = 'var(--wa-color-success-fill-loud, #15803d)';
+      } catch {
+        st.textContent = 'Sem conexão pra verificar — salvo mesmo assim (o servidor barra duplicado).';
+        st.style.color = '';
+      }
+      DB.slug = v;
+      Repo.persist();
+      $('#athlete-link-text').value = placarLink();
+    }, 450);
   }
 });
 

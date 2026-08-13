@@ -182,9 +182,24 @@ const Sync = (() => {
         lastRemoteTs = Date.parse(row.updated_at);
         setStatus(`Sincronizado · ${new Date().toLocaleTimeString()}`, true);
       } catch (e) {
-        setStatus('Offline — mudanças guardadas localmente', false);
+        if (e?.code === '23505') {
+          setStatus('Endereço do link já em uso por outra conta — troque em Link do Atleta', false);
+        } else {
+          setStatus('Offline — mudanças guardadas localmente', false);
+        }
       }
     }, 800);
+  }
+
+  /* Slug já usado por OUTRA conta? (snapshots são públicos pra leitura) */
+  async function slugTaken(slug) {
+    await ensureClient();
+    let q = client.from('event_snapshots')
+      .select('owner_id').eq('data->db->>slug', slug).limit(1);
+    if (cfg().ownerId) q = q.neq('owner_id', cfg().ownerId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data.length > 0;
   }
 
   /* ---------- logos (Storage) ---------- */
@@ -207,7 +222,7 @@ const Sync = (() => {
   return {
     start, push, cfg, saveCfg, enabled, ownerId,
     uploadLogo, removeLogo,
-    init, hasUser, signUp, signInPassword, setPassword,
+    init, hasUser, signUp, signInPassword, setPassword, slugTaken,
     sendMagicLink, signOut, userEmail,
   };
 })();
