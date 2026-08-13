@@ -491,6 +491,14 @@ function renderSponsorList() {
     '<p class="muted center" style="padding:.75rem 0">Nenhuma logo enviada.</p>';
 }
 
+/* Sub-menu das Configurações (segundo sidebar) */
+function showSettingsTab(tab) {
+  document.querySelectorAll('#settings-nav .snav-item')
+    .forEach(a => a.classList.toggle('active', a.dataset.stab === tab));
+  document.querySelectorAll('.spanel')
+    .forEach(p => p.hidden = p.dataset.spanel !== tab);
+}
+
 function renderSettings() {
   $('#dark-toggle').checked = document.documentElement.classList.contains('wa-dark');
   const email = Sync.userEmail();
@@ -2030,6 +2038,7 @@ document.addEventListener('click', e => {
     profileGateManual = false;
     $('#profile-gate').hidden = true;
   }
+  if (act === 'settings-tab') showSettingsTab(el.dataset.stab);
   if (act === 'delete-template') {
     Repo.deleteTemplate(Number(el.dataset.tpl));
     renderAll();

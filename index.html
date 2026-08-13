@@ -202,70 +202,110 @@
           <div>
             <h2>Configurações</h2>
           </div>
-          <wa-button variant="brand" data-action="open-template">
-            <wa-icon slot="start" name="plus"></wa-icon> Novo template
-          </wa-button>
         </div>
-        <h3 class="section-title"><wa-icon name="sliders"></wa-icon> Templates de evento</h3>
-        <div class="tpl-list" id="tpl-list"></div>
+        <div class="settings-layout">
+          <nav class="settings-nav" id="settings-nav">
+            <a class="snav-item active" data-action="settings-tab" data-stab="templates">
+              <wa-icon name="sliders"></wa-icon> Templates</a>
+            <a class="snav-item" data-action="settings-tab" data-stab="seasons">
+              <wa-icon name="ranking-star"></wa-icon> Temporadas</a>
+            <a class="snav-item" data-action="settings-tab" data-stab="account">
+              <wa-icon name="user"></wa-icon> Conta</a>
+            <a class="snav-item" data-action="settings-tab" data-stab="appearance">
+              <wa-icon name="moon"></wa-icon> Aparência</a>
+            <a class="snav-item" data-action="settings-tab" data-stab="data">
+              <wa-icon name="database"></wa-icon> Dados locais</a>
+          </nav>
 
-        <h3 class="section-title"><wa-icon name="ranking-star"></wa-icon> Temporadas</h3>
-        <div class="panel sync-panel">
-          <div class="form-stack">
-            <div class="sync-actions">
-              <wa-button variant="brand" data-action="open-season-modal">
-                <wa-icon slot="start" name="plus"></wa-icon> Nova temporada
-              </wa-button>
-              <wa-button appearance="outlined" variant="warning" data-action="demo-stage"
-                title="Soma uma etapa simulada com seus atletas pra ver a Pontuação; clicar de novo remove">
-                <wa-icon slot="start" name="flask"></wa-icon> Etapa demo
-              </wa-button>
-              <wa-button appearance="outlined" variant="warning" data-action="simulate-scores"
-                title="Preenche todos os placares pendentes da etapa atual (grupos + mata-mata) — sobra só o Encerrar etapa">
-                <wa-icon slot="start" name="wand-magic-sparkles"></wa-icon> Simular placares
+          <div class="settings-content">
+            <div class="spanel" data-spanel="templates">
+              <div class="spanel-head">
+                <h3 class="section-title"><wa-icon name="sliders"></wa-icon> Templates de evento</h3>
+                <wa-button size="s" variant="brand" data-action="open-template">
+                  <wa-icon slot="start" name="plus"></wa-icon> Novo template
+                </wa-button>
+              </div>
+              <div class="tpl-list" id="tpl-list"></div>
+            </div>
+
+            <div class="spanel" data-spanel="seasons" hidden>
+              <div class="spanel-head">
+                <h3 class="section-title"><wa-icon name="ranking-star"></wa-icon> Temporadas</h3>
+              </div>
+              <div class="panel sync-panel">
+                <div class="form-stack">
+                  <div class="sync-actions">
+                    <wa-button variant="brand" data-action="open-season-modal">
+                      <wa-icon slot="start" name="plus"></wa-icon> Nova temporada
+                    </wa-button>
+                    <wa-button appearance="outlined" variant="warning" data-action="demo-stage"
+                      title="Soma uma etapa simulada com seus atletas pra ver a Pontuação; clicar de novo remove">
+                      <wa-icon slot="start" name="flask"></wa-icon> Etapa demo
+                    </wa-button>
+                    <wa-button appearance="outlined" variant="warning" data-action="simulate-scores"
+                      title="Preenche todos os placares pendentes da etapa atual (grupos + mata-mata) — sobra só o Encerrar etapa">
+                      <wa-icon slot="start" name="wand-magic-sparkles"></wa-icon> Simular placares
+                    </wa-button>
+                  </div>
+                </div>
+                <div id="season-list"></div>
+              </div>
+            </div>
+
+            <div class="spanel" data-spanel="account" hidden>
+              <div class="spanel-head">
+                <h3 class="section-title"><wa-icon name="user"></wa-icon> Conta</h3>
+              </div>
+              <div class="panel sync-panel">
+                <div class="form-stack">
+                  <div class="sync-actions" id="auth-row">
+                    <span id="auth-status" class="muted"></span>
+                    <wa-button size="s" appearance="plain" variant="danger" data-action="sign-out" id="btn-signout" hidden>
+                      Sair
+                    </wa-button>
+                  </div>
+                  <div class="sync-actions">
+                    <span id="account-summary" class="muted"></span>
+                    <wa-button size="s" appearance="outlined" data-action="edit-profile">
+                      <wa-icon slot="start" name="pen"></wa-icon> Editar dados
+                    </wa-button>
+                  </div>
+                  <label class="field-label">Trocar senha</label>
+                  <div class="sync-actions">
+                    <wa-input id="sb-pass" type="password" placeholder="nova senha (mín. 6)" size="s" class="grow"></wa-input>
+                    <wa-button size="s" appearance="outlined" data-action="set-password">Salvar senha</wa-button>
+                  </div>
+                  <div class="sync-actions">
+                    <span id="sync-status" class="muted"></span>
+                  </div>
+                  <p class="muted sync-hint">
+                    Seus dados sincronizam sozinhos na nuvem — entre com a mesma conta em
+                    qualquer dispositivo. Sem internet, tudo continua funcionando localmente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="spanel" data-spanel="appearance" hidden>
+              <div class="spanel-head">
+                <h3 class="section-title"><wa-icon name="moon"></wa-icon> Aparência</h3>
+              </div>
+              <wa-checkbox id="dark-toggle">Modo escuro</wa-checkbox>
+            </div>
+
+            <div class="spanel" data-spanel="data" hidden>
+              <div class="spanel-head">
+                <h3 class="section-title"><wa-icon name="database"></wa-icon> Dados locais</h3>
+              </div>
+              <p class="muted" style="margin-top:0">
+                Apaga o que está salvo neste navegador e recarrega. O que já sincronizou na nuvem volta ao entrar de novo.
+              </p>
+              <wa-button appearance="outlined" variant="danger" data-action="wipe-local">
+                <wa-icon slot="start" name="trash"></wa-icon> Limpar dados locais
               </wa-button>
             </div>
           </div>
-          <div id="season-list"></div>
         </div>
-
-        <h3 class="section-title"><wa-icon name="user"></wa-icon> Conta</h3>
-        <div class="panel sync-panel">
-          <div class="form-stack">
-            <div class="sync-actions" id="auth-row">
-              <span id="auth-status" class="muted"></span>
-              <wa-button size="s" appearance="plain" variant="danger" data-action="sign-out" id="btn-signout" hidden>
-                Sair
-              </wa-button>
-            </div>
-            <div class="sync-actions">
-              <span id="account-summary" class="muted"></span>
-              <wa-button size="s" appearance="outlined" data-action="edit-profile">
-                <wa-icon slot="start" name="pen"></wa-icon> Editar dados
-              </wa-button>
-            </div>
-            <label class="field-label">Trocar senha</label>
-            <div class="sync-actions">
-              <wa-input id="sb-pass" type="password" placeholder="nova senha (mín. 6)" size="s" class="grow"></wa-input>
-              <wa-button size="s" appearance="outlined" data-action="set-password">Salvar senha</wa-button>
-            </div>
-            <div class="sync-actions">
-              <span id="sync-status" class="muted"></span>
-            </div>
-            <p class="muted sync-hint">
-              Seus dados sincronizam sozinhos na nuvem — entre com a mesma conta em
-              qualquer dispositivo. Sem internet, tudo continua funcionando localmente.
-            </p>
-          </div>
-        </div>
-
-        <h3 class="section-title"><wa-icon name="moon"></wa-icon> Aparência</h3>
-        <wa-checkbox id="dark-toggle">Modo escuro</wa-checkbox>
-
-        <h3 class="section-title"><wa-icon name="database"></wa-icon> Dados locais</h3>
-        <wa-button appearance="outlined" variant="danger" data-action="wipe-local">
-          <wa-icon slot="start" name="trash"></wa-icon> Limpar dados locais
-        </wa-button>
       </section>
 
 

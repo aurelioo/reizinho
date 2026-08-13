@@ -941,3 +941,41 @@ html.wa-dark .form-error { color: #fca5a5; }
   margin: 0; font-size: .82rem; text-align: center;
   color: var(--wa-color-danger-fill-loud, #b91c1c);
 }
+
+/* ====== configurações: sub-menu (segundo sidebar) ====== */
+.settings-layout {
+  display: grid; grid-template-columns: 190px minmax(0, 1fr);
+  gap: 1.5rem; align-items: start;
+}
+.settings-nav {
+  display: flex; flex-direction: column; gap: .15rem;
+  position: sticky; top: 1rem;
+  padding: .5rem;
+  background: var(--nav-bg);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.snav-item {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .65rem; border-radius: var(--radius);
+  font-size: .86rem; color: var(--ink);
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+.snav-item wa-icon { color: var(--ink-quiet); width: 1rem; }
+.snav-item:hover { background: var(--brand-soft); }
+.snav-item.active { background: var(--brand); color: #fff; font-weight: 600; }
+.snav-item.active wa-icon { color: #fff; }
+.spanel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; margin-bottom: .85rem;
+}
+.spanel-head .section-title { margin: 0; }
+
+@media (max-width: 920px) {
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-nav {
+    position: static; flex-direction: row;
+    overflow-x: auto; padding: .35rem;
+  }
+  .snav-item { padding: .45rem .7rem; }
+}
