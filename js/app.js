@@ -635,7 +635,7 @@ function gameItemHtml(g, seq, chip, isNext) {
   const tA = g.teamA ? teamPill(g.teamA, resA) : `<span class="muted">${koSrcText(g, 'A')}</span>`;
   const tB = g.teamB ? teamPill(g.teamB, resB) : `<span class="muted">${koSrcText(g, 'B')}</span>`;
   const undo = g.status === 'playing'
-    ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+    ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
          data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
     : '';
   return `
@@ -724,7 +724,7 @@ function tiebreaksHtml() {
           : `<wa-button size="s" variant="brand" data-action="call-tiebreak" data-tb="${tb.id}">
               <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar</wa-button>`;
       const tbUndo = tb.called && !resolved
-        ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+        ? `<wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
              data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>`
         : '';
       return `
@@ -1537,7 +1537,7 @@ function renderMission() {
     <div class="m-card">
       <div class="m-row">
         <span class="m-court-tag">
-          <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+          <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
             data-action="uncall-tiebreak" data-tb="${tb.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
           <wa-tag size="s" variant="warning">Desempate · Grupo ${tb.group}</wa-tag>
         </span>
@@ -1557,7 +1557,7 @@ function renderMission() {
       <div class="m-card">
         <div class="m-row">
           <span class="m-court-tag">
-            <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer chamada — volta pra fila"
+            <wa-button size="s" appearance="plain" class="undo-call" title="Desfazer"
               data-action="uncall-game" data-game="${g.id}"><wa-icon name="rotate-left"></wa-icon></wa-button>
             ${tag}
           </span>
