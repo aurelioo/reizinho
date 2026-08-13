@@ -164,6 +164,19 @@ const Repo = (() => {
 
   function addKnockoutMatches(matches) { DB.games.push(...matches); persist(); }
 
+  /* Nova etapa da temporada: mantém atletas (zerando presença/grupo),
+     limpa jogos/desempates; quadras e temporada continuam */
+  function startNewStage() {
+    DB.players.forEach(p => { p.present = false; p.group = null; delete p.withdrawn; });
+    DB.games = [];
+    DB.tiebreaks = [];
+    GROUPS = [];
+    DB.event.stageClosed = false;
+    DB.event.edition = '';
+    DB.event.date = '';
+    persist();
+  }
+
   function resetScores() {
     DB.games = DB.games.filter(g => g.phase !== 'ko');
     for (const g of DB.games) {
@@ -218,7 +231,7 @@ const Repo = (() => {
     addSeason, updateSeason, deleteSeason, addSeasonStage, popSeasonStage,
     addCourt, removeCourt,
     addAthlete, importAthletes, setPresence, setWithdrawn, deleteAllAthletes,
-    applyDraw, addKnockoutMatches, resetScores,
+    applyDraw, addKnockoutMatches, resetScores, startNewStage,
     callGame, saveScore, setTiebreakWinner,
   };
 })();

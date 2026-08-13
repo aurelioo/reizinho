@@ -1364,6 +1364,23 @@ function setupStage() {
   return 'live';
 }
 
+function openEventModal() {
+  $('#ev-name').value = DB.event.name ?? '';
+  $('#ev-edition').value = DB.event.edition ?? '';
+  $('#ev-date').value = DB.event.date ?? '';
+  $('#ev-season').innerHTML = '<wa-option value="">Sem temporada</wa-option>' +
+    (DB.seasons ?? []).map(s => `<wa-option value="${s.id}">${esc(s.name)}</wa-option>`).join('');
+  $('#ev-season').value = String(DB.event.seasonId ?? '');
+  $('#ev-name').hidden = !!eventSeason();
+  const s = eventSeason();
+  if (s && !$('#ev-edition').value) $('#ev-edition').value = `${s.stages.length + 1}ª Etapa`;
+  if (!$('#ev-date').value) $('#ev-date').value = new Date().toISOString().slice(0, 10);
+  $('#dlg-event').dataset.tpl = DB.event.templateId ?? DB.templates[0]?.id;
+  renderTplPicker();
+  $('#ev-error').hidden = true;
+  $('#dlg-event').open = true;
+}
+
 function eventDateFmt() {
   if (!DB.event.date) return '';
   const d = new Date(`${DB.event.date}T12:00:00`);
@@ -1734,6 +1751,7 @@ function renderHeader() {
   $('#event-card-sub').textContent = DB.event.created
     ? [DB.event.edition, eventDateFmt()].filter(Boolean).join(' · ')
     : 'Clique pra criar';
+  $('#nav-new-stage').hidden = !DB.event.stageClosed;
   // cabeçalho de impressão: temporada como título, etapa/data como linha fina
   $('#print-title').textContent = eventSeason()?.name || DB.event.name || '';
   $('#print-sub').textContent = [DB.event.edition, eventDateFmt()].filter(Boolean).join(' · ');
@@ -1890,17 +1908,13 @@ document.addEventListener('click', e => {
         return;
       }
     }
-    $('#ev-name').value = DB.event.name ?? '';
-    $('#ev-edition').value = DB.event.edition ?? '';
-    $('#ev-date').value = DB.event.date ?? '';
-    $('#ev-season').innerHTML = '<wa-option value="">Sem temporada</wa-option>' +
-      (DB.seasons ?? []).map(s => `<wa-option value="${s.id}">${esc(s.name)}</wa-option>`).join('');
-    $('#ev-season').value = String(DB.event.seasonId ?? '');
-    $('#ev-name').hidden = !!eventSeason();
-    $('#dlg-event').dataset.tpl = DB.event.templateId ?? DB.templates[0]?.id;
-    renderTplPicker();
-    $('#ev-error').hidden = true;
-    $('#dlg-event').open = true;
+    openEventModal();
+  }
+  if (act === 'new-stage') {
+    if (!confirm('Iniciar nova etapa? Jogos, grupos e presenças são zerados — a pontuação da temporada fica salva.')) return;
+    Repo.startNewStage();
+    renderAll();
+    openEventModal();
   }
   if (act === 'pick-template') {
     $('#dlg-event').dataset.tpl = el.dataset.tpl;

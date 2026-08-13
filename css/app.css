@@ -857,3 +857,10 @@ html.wa-dark .form-error { color: #fca5a5; }
 .season-table { font-size: .8rem; }
 .season-table th, .season-table td { padding: .28rem .55rem; }
 .season-table .cut-row td { padding: .22rem .55rem; }
+
+/* CTA de nova etapa no topo do menu */
+.nav-cta {
+  background: var(--brand-soft); color: var(--brand);
+  font-weight: 700; margin-bottom: .35rem;
+}
+.nav-cta wa-icon { color: var(--brand); }
