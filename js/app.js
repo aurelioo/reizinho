@@ -2035,8 +2035,8 @@ document.addEventListener('click', e => {
     });
     $('#dlg-event').open = false;
     renderAll();
-    // Evento recém-criado sem atletas: segue direto pra importação
-    if (isNew && !DB.players.length) {
+    // Etapa salva sem atletas (nova etapa ou primeira): vai pra Atletas e abre a importação
+    if (!DB.players.length) {
       showView('players');
       $('#import-error').hidden = true;
       updateImportCount();
