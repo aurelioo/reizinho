@@ -989,3 +989,4 @@ html.wa-dark .sp-logos img { background: #fff; padding: .35rem .6rem; }
 .slug-ind { font-weight: 700; font-size: .9rem; }
 .slug-ind.ok { color: var(--wa-color-success-fill-loud, #15803d); }
 .slug-ind.bad { color: var(--wa-color-danger-fill-loud, #b91c1c); }
+.m-card .tb-names { margin: 0; line-height: 1.55; }

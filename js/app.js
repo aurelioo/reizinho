@@ -714,13 +714,16 @@ function tiebreaksHtml() {
       const action = resolved
         ? `<wa-button size="s" appearance="plain" title="Editar desempate" data-action="open-winner" data-tb="${tb.id}">
             <wa-icon name="pen"></wa-icon></wa-button>`
-        : `<wa-button size="s" variant="brand" appearance="outlined" data-action="open-winner" data-tb="${tb.id}">
-            <wa-icon slot="start" name="crown"></wa-icon> Informar vencedor</wa-button>`;
+        : tb.called
+          ? `<wa-button size="s" variant="brand" appearance="outlined" data-action="open-winner" data-tb="${tb.id}">
+              <wa-icon slot="start" name="crown"></wa-icon> Informar vencedor</wa-button>`
+          : `<wa-button size="s" variant="brand" data-action="call-tiebreak" data-tb="${tb.id}">
+              <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar</wa-button>`;
       return `
-        <div class="game-item tiebreak ${resolved ? 'done' : ''}">
+        <div class="game-item tiebreak ${resolved ? 'done' : ''} ${tb.called && !resolved ? 'playing' : ''}">
           <span class="game-seq">D${i + 1}</span>
           <span class="chip chip-g">Grupo ${tb.group}</span>
-          <wa-tag size="s" variant="${resolved ? 'neutral' : 'warning'}">${tb.type}</wa-tag>
+          <wa-tag size="s" variant="${resolved ? 'neutral' : 'warning'}">${tb.type}${tb.called && !resolved ? ' · em quadra' : ''}</wa-tag>
           <span class="tb-players">${players}</span>
           <span class="game-action">${action}</span>
         </div>`;
@@ -1521,7 +1524,19 @@ function renderMission() {
     return;
   }
 
-  const nowBlock = playingGames().map(g => {
+  // desempates chamados jogam na quadra que estiver livre — sem quadra fixa
+  const tbNow = DB.tiebreaks.filter(t => t.called && t.winnerId == null).map(tb => `
+    <div class="m-card">
+      <div class="m-row">
+        <wa-tag size="s" variant="warning">Desempate · Grupo ${tb.group}</wa-tag>
+      </div>
+      <p class="tb-names">${tb.players.map(nameLink).join(' vs ')}</p>
+      <wa-button size="s" variant="success" data-action="open-winner" data-tb="${tb.id}">
+        <wa-icon slot="start" name="circle-check"></wa-icon> Quem venceu?
+      </wa-button>
+    </div>`).join('');
+
+  const nowBlock = (playingGames().map(g => {
     const c = DB.courts.find(x => x.id === g.courtId);
     const tag = g.offCourt
       ? `<wa-tag size="s" variant="warning"><wa-icon name="hourglass-half"></wa-icon>&nbsp;${c.name} · placar pendente</wa-tag>`
@@ -1541,11 +1556,26 @@ function renderMission() {
           <wa-icon slot="start" name="circle-check"></wa-icon> Registrar placar
         </wa-button>
       </div>`;
-  }).join('') || '<p class="muted m-empty">Nenhum jogo em quadra.</p>';
+  }).join('') + tbNow) || '<p class="muted m-empty">Nenhum jogo em quadra.</p>';
+
+  // desempate pendente destrava a classificação — vem antes na fila e não pede quadra
+  const tbNext = DB.tiebreaks.find(t => !t.called && t.winnerId == null);
 
   let nextBlock;
   if (!total) {
     nextBlock = '<p class="muted m-empty">Cadastre atletas e sorteie os grupos para gerar os jogos.</p>';
+  } else if (tbNext) {
+    nextBlock = `
+      <div class="m-card next-card">
+        <div class="m-row">
+          <span class="chip chip-g">Grupo ${tbNext.group} · Desempate</span>
+          <wa-tag size="s" variant="warning">${tbNext.type}</wa-tag>
+        </div>
+        <p class="tb-names">${tbNext.players.map(nameLink).join('<br>')}</p>
+        <wa-button size="s" variant="brand" data-action="call-tiebreak" data-tb="${tbNext.id}">
+          <wa-icon slot="start" name="bullhorn"></wa-icon> Chamar — quadra que estiver livre
+        </wa-button>
+      </div>`;
   } else if (next) {
     const chip = next.phase === 'ko'
       ? `<span class="chip chip-g">${koRoundLabel(next)}</span>`
@@ -2047,6 +2077,10 @@ document.addEventListener('click', e => {
     $('#profile-gate').hidden = true;
   }
   if (act === 'settings-tab') showSettingsTab(el.dataset.stab);
+  if (act === 'call-tiebreak') {
+    Repo.callTiebreak(el.dataset.tb);
+    renderAll();
+  }
   if (act === 'delete-template') {
     Repo.deleteTemplate(Number(el.dataset.tpl));
     renderAll();

@@ -223,6 +223,12 @@ const Repo = (() => {
     if (tb) { tb.winnerId = athleteId; persist(); }
   }
 
+  /* Desempate não ocupa quadra cadastrada — joga na que estiver livre */
+  function callTiebreak(id) {
+    const tb = DB.tiebreaks.find(t => t.id === id);
+    if (tb) { tb.called = true; persist(); }
+  }
+
   return {
     hydrate, persist, wipe,
     saveEvent, saveSetup,
@@ -232,6 +238,6 @@ const Repo = (() => {
     addCourt, removeCourt,
     addAthlete, importAthletes, setPresence, setWithdrawn, deleteAllAthletes,
     applyDraw, addKnockoutMatches, resetScores, startNewStage,
-    callGame, saveScore, setTiebreakWinner,
+    callGame, saveScore, setTiebreakWinner, callTiebreak,
   };
 })();
