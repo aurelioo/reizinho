@@ -1530,9 +1530,9 @@ function renderMission() {
           <span class="muted"><wa-icon name="clock"></wa-icon> ${g.elapsedMin} min</span>
         </div>
         <div class="m-match">
-          <span>${teamHtml(g.teamA)}</span>
+          <span>${teamLinesHtml(g.teamA)}</span>
           <strong>${g.scoreA || g.scoreB ? `${g.scoreA} × ${g.scoreB}` : 'vs'}</strong>
-          <span>${teamHtml(g.teamB)}</span>
+          <span>${teamLinesHtml(g.teamB)}</span>
         </div>
         <wa-button size="s" variant="success" data-action="open-score" data-game="${g.id}">
           <wa-icon slot="start" name="circle-check"></wa-icon> Registrar placar
