@@ -828,6 +828,7 @@ function renderPlayers() {
    caracteres invisíveis (word-joiner, zero-width) e espaços duplicados */
 const cleanImportLine = s => s
   .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')             // zero-width / word-joiner (WhatsApp)
+  .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u20E3]/gu, '')  // emojis
   .replace(/\u00A0/g, ' ')                                   // nbsp
   .replace(/^\s*[\u2022*]*\s*\d*\s*[.)\-\u2013\u2014:]?\s*/, '')  // "12." "3)" "- " "\u2022 "
   .replace(/\s+/g, ' ')
