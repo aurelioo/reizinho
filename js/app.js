@@ -228,8 +228,8 @@ function closeStage() {
   Repo.saveEvent({ stageClosed: true });
   renderAll();
   showView('season');
-  // consolidou: já abre a impressão pra gerar o PDF da pontuação
-  setTimeout(() => window.print(), 400);
+  // consolidou: já abre a impressão (paisagem) pra gerar o PDF da pontuação
+  setTimeout(printLandscape, 400);
 }
 
 /* Linhas da pontuação no formato da planilha oficial:
@@ -1365,6 +1365,16 @@ function setupStage() {
   return 'live';
 }
 
+/* Pontuação cresce uma coluna por etapa — imprime em paisagem */
+function printLandscape() {
+  const st = document.createElement('style');
+  st.textContent = '@page { size: A4 landscape; }';
+  document.head.appendChild(st);
+  const cleanup = () => { st.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
 function openEventModal() {
   $('#ev-name').value = DB.event.name ?? '';
   $('#ev-edition').value = DB.event.edition ?? '';
@@ -1942,7 +1952,7 @@ document.addEventListener('click', e => {
   if (act === 'close-stage') closeStage();
   if (act === 'demo-stage') toggleDemoStage();
   if (act === 'simulate-scores') simulateStageScores();
-  if (act === 'print-season') { showView('season'); setTimeout(() => window.print(), 100); }
+  if (act === 'print-season') { showView('season'); setTimeout(printLandscape, 100); }
   if (act === 'print-view') setTimeout(() => window.print(), 100);
   if (act === 'sponsor-upload') {
     (async () => {
