@@ -1276,11 +1276,11 @@ function koMatchCard(m) {
   let tag = '';
   if (m.status === 'playing') {
     const c = DB.courts.find(x => x.id === m.courtId);
-    tag = `<wa-tag size="s" variant="brand"><wa-icon name="volleyball"></wa-icon>&nbsp;${c?.name ?? ''}</wa-tag>`;
+    tag = `<span class="mc-note live"><wa-icon name="volleyball"></wa-icon> ${c?.name ?? ''}</span>`;
   } else if (m.bye) {
-    tag = '<wa-tag size="s" variant="neutral">bye</wa-tag>';
+    tag = '<span class="mc-note">bye</span>';
   } else if (m.wo) {
-    tag = '<wa-tag size="s" variant="warning">W.O.</wa-tag>';
+    tag = '<span class="mc-note">W.O.</span>';
   }
   return `
     <div class="match-card ${m.status}${m.id === 'KO-3P' ? ' mc-third' : ''}">

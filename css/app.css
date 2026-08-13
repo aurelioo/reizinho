@@ -1004,12 +1004,10 @@ wa-tag::part(base) {
   font-weight: 500; line-height: 1.3;
 }
 
-/* tags dentro do bracket (quadra / bye): bem compactas e discretas */
-.match-card wa-tag::part(base) {
-  font-size: .58rem; line-height: 1.1;
-  padding: .05rem .28rem;
-  font-weight: 400;
-  border-color: transparent;
-  background: var(--bg-app); color: var(--ink-quiet);
+/* nota discreta no bracket (quadra / bye / W.O.): texto puro */
+.mc-note {
+  font-size: .6rem; color: var(--ink-quiet);
+  display: inline-flex; align-items: center; gap: .2rem;
 }
-.match-card wa-tag wa-icon { font-size: .52rem; }
+.mc-note.live { color: var(--brand); }
+.mc-note wa-icon { font-size: .55rem; }
