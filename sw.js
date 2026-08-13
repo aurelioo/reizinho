@@ -6,7 +6,7 @@
    é o IndexedDB do app).
    ============================================================= */
 
-const CACHE = 'reizinho-v1';
+const CACHE = 'reizinho-v2';
 const CORE = [
   './',
   './index.html',
@@ -45,8 +45,10 @@ self.addEventListener('fetch', e => {
   };
 
   if (url.origin === location.origin) {
+    // no-cache: revalida com o servidor (ETag) em vez de aceitar o
+    // max-age do Pages — deploy novo aparece no próximo reload
     e.respondWith(
-      fetch(e.request).then(putInCache)
+      fetch(e.request, { cache: 'no-cache' }).then(putInCache)
         .catch(() => caches.match(e.request, { ignoreSearch: true })
           .then(hit => hit ?? caches.match('./index.html')))
     );
