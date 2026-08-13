@@ -778,7 +778,7 @@ html.wa-dark .form-error { color: #fca5a5; }
 }
 .sp-logos { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
 .sp-logos img {
-  height: 44px; max-width: 160px; object-fit: contain;
+  height: 64px; max-width: 220px; object-fit: contain;
 }
 
 /* ====== temporada / ranking ====== */
