@@ -1026,7 +1026,7 @@ function gameRow(g) {
     right = `<span class="result-score">${g.wo ? 'W.O.' : `${g.scoreA} × ${g.scoreB}`}</span>`;
   } else if (g.status === 'playing') {
     const court = DB.courts.find(c => c.id === g.courtId);
-    right = `<wa-tag size="s" variant="brand"><wa-icon name="volleyball"></wa-icon>&nbsp;${court.name} · ${g.scoreA}×${g.scoreB}</wa-tag>`;
+    right = `<wa-tag size="s" variant="brand"><wa-icon name="baseball"></wa-icon>&nbsp;${court.name} · ${g.scoreA}×${g.scoreB}</wa-tag>`;
   } else {
     right = '';
   }
@@ -1104,11 +1104,11 @@ function renderCourtsView() {
   $('#courts-list').innerHTML = DB.courts.map(c => {
     const game = courtOccupant(c.id);
     const status = game
-      ? `<wa-tag size="s" variant="brand"><wa-icon name="volleyball"></wa-icon>&nbsp;Em jogo · ${esc(game.teamA.map(nameOf).join(' & '))} vs ${esc(game.teamB.map(nameOf).join(' & '))}</wa-tag>`
+      ? `<wa-tag size="s" variant="brand"><wa-icon name="baseball"></wa-icon>&nbsp;Em jogo · ${esc(game.teamA.map(nameOf).join(' & '))} vs ${esc(game.teamB.map(nameOf).join(' & '))}</wa-tag>`
       : '<wa-tag size="s" variant="success">Livre</wa-tag>';
     return `
       <div class="court-row">
-        <span class="court-name"><wa-icon name="volleyball"></wa-icon> ${esc(c.name)}</span>
+        <span class="court-name"><wa-icon name="baseball"></wa-icon> ${esc(c.name)}</span>
         ${status}
         <wa-button size="s" appearance="plain" variant="danger" title="${game ? 'Quadra em uso — encerre o jogo antes de remover' : 'Remover quadra'}"
           data-action="remove-court" data-court="${c.id}" ${game ? 'disabled' : ''}>
@@ -1125,7 +1125,7 @@ function renderCourtsDialog() {
     const game = courtOccupant(c.id);
     return `
       <div class="court-row">
-        <span class="court-name"><wa-icon name="volleyball"></wa-icon> ${esc(c.name)}</span>
+        <span class="court-name"><wa-icon name="baseball"></wa-icon> ${esc(c.name)}</span>
         ${game ? '<wa-tag size="s" variant="brand">Em jogo</wa-tag>' : '<span></span>'}
         <wa-button size="s" appearance="plain" variant="danger" title="Remover quadra"
           data-action="remove-court" data-court="${c.id}" ${game ? 'disabled' : ''}>
@@ -1276,7 +1276,7 @@ function koMatchCard(m) {
   let tag = '';
   if (m.status === 'playing') {
     const c = DB.courts.find(x => x.id === m.courtId);
-    tag = `<span class="mc-note live"><wa-icon name="volleyball"></wa-icon> ${c?.name ?? ''}</span>`;
+    tag = `<span class="mc-note live"><wa-icon name="baseball"></wa-icon> ${c?.name ?? ''}</span>`;
   } else if (m.bye) {
     tag = '<span class="mc-note">bye</span>';
   } else if (m.wo) {
@@ -1476,7 +1476,7 @@ function renderMissionSetup(stage) {
         ${nCourts ? `<wa-button size="s" variant="brand" data-action="confirm-courts">
           <wa-icon slot="start" name="circle-check"></wa-icon> Confirmar ${nCourts} quadra${nCourts > 1 ? 's' : ''}</wa-button>` : ''}
         <wa-button size="s" appearance="${nCourts ? 'plain' : 'outlined'}" data-action="nav" data-view="courts">
-          <wa-icon slot="start" name="volleyball"></wa-icon> Gerenciar quadras</wa-button>`,
+          <wa-icon slot="start" name="baseball"></wa-icon> Gerenciar quadras</wa-button>`,
     },
   ];
   const idx = steps.findIndex(s => s.key === stage);
@@ -1643,7 +1643,7 @@ function renderMission() {
     </div>
 
     <div class="m-section">
-      <span class="m-label"><wa-icon name="volleyball"></wa-icon> Agora em quadra</span>
+      <span class="m-label"><wa-icon name="baseball"></wa-icon> Agora em quadra</span>
       ${nowBlock}
     </div>
 
@@ -1744,7 +1744,7 @@ function athleteGameRow(g, pid) {
         <wa-icon name="pen"></wa-icon></wa-button>`;
   } else if (g.status === 'playing') {
     const court = DB.courts.find(c => c.id === g.courtId);
-    right = `<wa-tag size="s" variant="brand"><wa-icon name="volleyball"></wa-icon>&nbsp;${court.name}${my || their ? ` · ${my}×${their}` : ''}</wa-tag>
+    right = `<wa-tag size="s" variant="brand"><wa-icon name="baseball"></wa-icon>&nbsp;${court.name}${my || their ? ` · ${my}×${their}` : ''}</wa-tag>
       <wa-button size="s" variant="success" data-action="open-score" data-game="${g.id}">
         <wa-icon slot="start" name="circle-check"></wa-icon> Placar</wa-button>`;
   } else {
@@ -1829,7 +1829,7 @@ function renderHeader() {
   $('#stage-badge').textContent = koBuilt() ? 'Mata-mata' : 'Fase de Grupos';
   const busy = DB.courts.filter(c => courtOccupant(c.id)).length;
   $('#courts-chip').innerHTML =
-    `<wa-icon name="volleyball"></wa-icon> ${busy}/${DB.courts.length} quadras em uso`;
+    `<wa-icon name="baseball"></wa-icon> ${busy}/${DB.courts.length} quadras em uso`;
   $('#event-card-title').textContent = DB.event.created ? DB.event.name : 'Sem evento';
   $('#event-card-sub').textContent = DB.event.created
     ? [DB.event.edition, eventDateFmt()].filter(Boolean).join(' · ')
@@ -1962,7 +1962,7 @@ function openCourtPick(gameId) {
   $('#pick-courts').innerHTML = DB.courts.map(c => `
       <wa-button appearance="outlined" class="pick-court-btn"
         data-action="pick-court" data-court="${c.id}" data-game="${g.id}">
-        <wa-icon slot="start" name="volleyball"></wa-icon> ${esc(c.name)}
+        <wa-icon slot="start" name="baseball"></wa-icon> ${esc(c.name)}
         ${courtOccupant(c.id) ? '' : '<wa-tag slot="end" size="s" variant="success">Livre</wa-tag>'}
       </wa-button>`).join('');
   $('#dlg-court-pick').open = true;
