@@ -499,6 +499,7 @@ function renderSettings() {
   }
   if (document.activeElement?.id !== 'sb-placar') $('#sb-placar').value = sb.placarUrl ?? '';
   $('#sb-enabled').checked = !!sb.enabled;
+  $('#dark-toggle').checked = document.documentElement.classList.contains('wa-dark');
   const email = Sync.userEmail();
   $('#auth-status').textContent = email
     ? `Conectado como ${email}`
@@ -1893,10 +1894,6 @@ document.addEventListener('click', e => {
   if (!el || el.classList.contains('disabled')) return;
   const act = el.dataset.action;
   if (act === 'nav') showView(el.dataset.view);
-  if (act === 'toggle-dark') {
-    const dark = document.documentElement.classList.toggle('wa-dark');
-    el.innerHTML = `<wa-icon name="${dark ? 'sun' : 'moon'}"></wa-icon>`;
-  }
   if (act === 'add-court') addCourt();
   if (act === 'remove-court') {
     Repo.removeCourt(Number(el.dataset.court));
@@ -2149,6 +2146,10 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.id === 'dark-toggle') {
+    document.documentElement.classList.toggle('wa-dark', e.target.checked);
+    localStorage.setItem('reizinho.dark', e.target.checked ? '1' : '');
+  }
   if (e.target.classList?.contains('present-check')) {
     const p = playerById(Number(e.target.dataset.player));
     if (p) { Repo.setPresence(p.id, e.target.checked); renderAll(); }
@@ -2229,6 +2230,8 @@ setInterval(() => {
 
 /* Boot: hidrata do IndexedDB; sem estado salvo, começa zerado.
    Com sync configurado, conecta ao Supabase (snapshot remoto vence). */
+if (localStorage.getItem('reizinho.dark')) document.documentElement.classList.add('wa-dark');
+
 (async () => {
   await Repo.hydrate();
   renderAll();
