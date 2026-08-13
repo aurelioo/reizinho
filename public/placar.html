@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Placar ao vivo — Aldeia Beach Sports</title>
+  <style>
+    :root {
+      --bg: #10161b; --panel: #1a2229; --border: #2b3640; --row: rgb(255 255 255 / .04);
+      --ink: #e8edf2; --muted: #8b98a5;
+      --brand: #38bdf8; --on-brand: #06202c;
+      --ok: #4ade80; --bad: #f87171; --sun: #fbbf24;
+      --gold: #fbbf24; --silver: #cbd5e1; --bronze: #e2a76f;
+    }
+    /* segue o tema do sistema */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f5f7; --panel: #ffffff; --border: #dde3ea; --row: rgb(0 0 0 / .05);
+        --ink: #1c2733; --muted: #5b6773;
+        --brand: #0284c7; --on-brand: #ffffff;
+        --ok: #15803d; --bad: #dc2626; --sun: #b45309;
+        --gold: #f5b921; --silver: #94a3b8; --bronze: #cd8548;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding-bottom: 4.2rem; /* tabbar */
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+
+    header {
+      display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
+      padding: .7rem .8rem .5rem;
+    }
+    header h1 { margin: 0; font-size: 1.05rem; }
+    header .sub { color: var(--muted); font-size: .72rem; }
+    .live[hidden] { display: none; }
+    .live {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--ok); white-space: nowrap;
+    }
+    .live i { width: .5rem; height: .5rem; border-radius: 999px; background: var(--ok);
+      animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .3; } }
+
+    .card {
+      background: var(--panel); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin-bottom: .7rem;
+    }
+    .card h2 {
+      margin: 0; padding: .45rem .8rem; font-size: .66rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border); background: rgb(255 255 255 / .02);
+    }
+    .empty { padding: .8rem; color: var(--muted); font-size: .8rem; }
+
+    /* ---- jogos (linhas densas) ---- */
+    .g {
+      display: grid; grid-template-columns: auto minmax(0,1fr) auto minmax(0,1fr);
+      gap: .45rem; align-items: center;
+      padding: .4rem .8rem; border-bottom: 1px solid var(--row); font-size: .82rem;
+    }
+    .g:last-child { border-bottom: none; }
+    .g.playing { box-shadow: inset 3px 0 0 var(--brand); background: rgb(56 189 248 / .06); }
+    .g .tag {
+      font-size: .62rem; font-weight: 700; color: var(--muted); white-space: nowrap;
+      text-transform: uppercase; min-width: 3.2rem;
+    }
+    .g .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    .g .t:last-child { text-align: left; }
+    .g .t.win { color: var(--ok); font-weight: 700; }
+    .g .t.lose { color: var(--muted); }
+    .g .s {
+      font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap;
+      font-size: .85rem; text-align: center; min-width: 2.6rem;
+    }
+    .g .s.on { color: var(--brand); }
+    .g .s.vs { color: var(--muted); font-weight: 400; font-size: .72rem; }
+    .g .court { color: var(--brand); font-size: .62rem; font-weight: 700; }
+
+    /* ---- tabelas densas ---- */
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; table-layout: fixed; }
+    th, td { padding: .32rem .55rem; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th:first-child, td:first-child { width: 2.6rem; }
+    th.num, td.num { width: 2.7rem; }
+    th { font-size: .62rem; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { border-bottom: 1px solid var(--row); }
+    tr:last-child td { border-bottom: none; }
+    .num { text-align: center; font-variant-numeric: tabular-nums; }
+    th.num { text-align: center; }
+    tr[data-player] { cursor: pointer; }
+    tr[data-player]:active { background: var(--row); }
+    .withdrawn { text-decoration: line-through; color: var(--muted); }
+    .qcheck { color: var(--ok); font-weight: 800; }
+    tr.in-cut td:first-child { background: #fde68a; color: #713f12; font-weight: 800; }
+    .pts-table { table-layout: auto; min-width: 100%; font-size: .74rem; }
+    .pts-table th, .pts-table td { width: auto; white-space: nowrap; padding: .22rem .45rem; }
+    tr.cut-row td {
+      padding: .25rem .55rem; text-align: center;
+      font-size: .58rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--bad); border-bottom: 2px dashed var(--bad);
+      background: rgb(248 113 113 / .06);
+    }
+
+    .medal {
+      display: inline-grid; place-items: center; min-width: 1.35rem; height: 1.35rem;
+      border-radius: 999px; font-size: .62rem; font-weight: 800; color: #111;
+    }
+    .medal.m1 { background: var(--gold); }
+    .medal.m2 { background: var(--silver); }
+    .medal.m3 { background: var(--bronze); }
+
+    .group-head {
+      padding: .45rem .8rem .15rem; font-weight: 700; font-size: .78rem; color: var(--brand);
+    }
+
+    /* ---- perfil ---- */
+    .me-head { display: flex; align-items: center; gap: .6rem; padding: .7rem .8rem; }
+    .me-head .avatar {
+      width: 2.4rem; height: 2.4rem; border-radius: 999px; background: var(--brand);
+      color: var(--on-brand); display: grid; place-items: center; font-weight: 800; font-size: 1rem;
+    }
+    .me-head strong { font-size: 1rem; display: block; }
+    .me-head .sub { color: var(--muted); font-size: .72rem; }
+    .me-head button {
+      margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: .3rem .6rem; font-size: .7rem; cursor: pointer;
+    }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center;
+      border-top: 1px solid var(--border); }
+    .stats div { padding: .5rem .2rem; border-right: 1px solid var(--row); }
+    .stats div:last-child { border-right: none; }
+    .stats b { display: block; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+    .stats span { font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .hint-line { padding: .55rem .8rem; font-size: .78rem; border-top: 1px solid var(--border); }
+    .hint-line.ok { color: var(--ok); }
+    .hint-line.warn { color: var(--sun); }
+    .hint-line.bad { color: var(--bad); }
+
+    .search { padding: .6rem .8rem; }
+    .search input {
+      width: 100%; padding: .55rem .7rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--ink);
+      font: inherit; font-size: 16px; /* <16px = zoom automático no iOS */
+    }
+    .pick { padding: .5rem .8rem; border-bottom: 1px solid var(--row); cursor: pointer; }
+    .pick small { color: var(--muted); }
+
+    .champion { text-align: center; padding: .8rem; font-weight: 800; color: var(--sun); }
+    .champion small { display: block; color: var(--muted); font-weight: 400; font-size: .72rem; }
+    footer { text-align: center; color: var(--muted); font-size: .68rem; padding: .5rem 0 1rem; }
+
+    #sponsors { display: flex; flex-direction: column; gap: .9rem; padding: 0 .8rem 1.2rem; }
+    .sp-cat { display: flex; flex-direction: column; gap: .4rem; align-items: center; }
+    .sp-cat-name {
+      font-size: .6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--muted);
+    }
+    .sp-logos { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+    .sp-logos img {
+      height: 64px; max-width: 220px; object-fit: contain;
+    }
+
+    /* ---- splash de patrocinadores (1ª abertura do dia) ---- */
+    .splash {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+    }
+    .splash-body {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.4rem; padding: 2rem 1rem 6.5rem; text-align: center;
+    }
+    .splash-body h1 { margin: 0; font-size: 1.3rem; }
+    .splash-body .sub { color: var(--muted); font-size: .8rem; margin-top: -.9rem; }
+    .splash .sp-cat { gap: .6rem; }
+    .splash .sp-logos { gap: 1rem; }
+    .splash .sp-logos img { height: 84px; max-width: 260px; }
+    .splash-btn {
+      position: fixed; left: 1rem; right: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom));
+      max-width: 608px; margin: 0 auto;
+      padding: 1rem; border: none; border-radius: 14px;
+      background: var(--brand); color: var(--on-brand);
+      font: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 6px 20px rgb(56 189 248 / .35);
+    }
+
+    /* ---- tabbar ---- */
+    .tabbar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      background: var(--panel); border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tabbar button {
+      background: none; border: none; color: var(--muted); font: inherit;
+      padding: .5rem 0 .55rem; cursor: pointer; font-size: .68rem;
+      display: flex; flex-direction: column; align-items: center; gap: .15rem;
+    }
+    .tabbar button .ic { line-height: 0; }
+    .tabbar button .ic svg { width: 21px; height: 21px; }
+    .tabbar button.on { color: var(--brand); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1 id="ev-name">Carregando…</h1>
+        <div class="sub" id="ev-sub"></div>
+      </div>
+      <span class="live"><i></i> ao vivo</span>
+    </header>
+    <div id="content"><div class="card"><div class="empty">Buscando placar…</div></div></div>
+    <footer id="updated"></footer>
+    <div id="sponsors"></div>
+  </div>
+
+  <nav class="tabbar">
+    <button data-tab="jogos" class="on"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 4.5a9 9 0 0 1 0 15"/><path d="M18 4.5a9 9 0 0 0 0 15"/></svg>
+    </span>Jogos</button>
+    <button data-tab="atletas"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </span>Atletas</button>
+    <button data-tab="ranking"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21c1.18.54 2.03 2.03 2.03 3.79"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    </span>Pontuação</button>
+    <button data-tab="perfil"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>Meu Perfil</button>
+  </nav>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://cjtzftkhtmpziyxyyqcx.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_m7jjJExliY3NASa6jFIizw_Y0m6bYjH';
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let SNAP = null;
+    // ?e=<owner_id> — trava a página no evento do organizador certo
+    const OWNER = new URLSearchParams(location.search).get('e');
+    const state = {
+      tab: 'jogos',
+      meId: Number(localStorage.getItem('placar.me')) || null,
+      viewId: null,      // perfil de outro atleta (tap na lista)
+      search: '',
+    };
+
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const P = id => SNAP.db.players.find(p => p.id === id);
+    const nameOf = id => P(id)?.name ?? '?';
+    const team = ids => ids ? ids.map(nameOf).map(esc).join(' & ') : '—';
+    const deaccent = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    function standings(group) {
+      const rows = SNAP.db.players.filter(p => p.group === group)
+        .map(p => ({ p, j: 0, wins: 0, saldo: 0, games: 0 }));
+      const by = Object.fromEntries(rows.map(r => [r.p.id, r]));
+      for (const g of SNAP.db.games.filter(x => x.group === group && x.status === 'done')) {
+        const winA = g.scoreA > g.scoreB;
+        for (const id of g.teamA) { const r = by[id]; if (r) { r.j++; r.games += g.scoreA; r.saldo += g.scoreA - g.scoreB; if (winA) r.wins++; } }
+        for (const id of g.teamB) { const r = by[id]; if (r) { r.j++; r.games += g.scoreB; r.saldo += g.scoreB - g.scoreA; if (!winA) r.wins++; } }
+      }
+      return rows.sort((a, b) => b.wins - a.wins || b.saldo - a.saldo || b.games - a.games);
+    }
+    const posOf = p => p.group ? standings(p.group).findIndex(r => r.p.id === p.id) + 1 : 0;
+
+    // colocação só faz sentido com ≥2 jogos concluídos no grupo
+    const groupPlayedCount = letter =>
+      SNAP.db.games.filter(g => g.group === letter && g.status === 'done').length;
+    const rankingReady = letter => groupPlayedCount(letter) >= 2;
+
+    const groupDone = letter =>
+      SNAP.db.games.filter(g => g.group === letter).every(g => g.status === 'done');
+    const allGroupsDone = () => (SNAP.groups ?? []).every(groupDone);
+    const nextPow2 = n => { let p = 1; while (p < n) p *= 2; return p; };
+
+    /* ids classificados: top 2 de grupo fechado + melhores 3ºs (todos fechados) */
+    function qualifiedIds() {
+      const groups = SNAP.groups ?? [];
+      const ids = new Set();
+      for (const letter of groups) {
+        if (!groupDone(letter)) continue;
+        standings(letter).filter(r => !r.p.withdrawn).slice(0, 2)
+          .forEach(r => ids.add(r.p.id));
+      }
+      if (groups.length && allGroupsDone()) {
+        const target = nextPow2(groups.length);
+        const needThirds = Math.max(0, target * 2 - groups.length * 2);
+        groups.map(l => standings(l).filter(r => !r.p.withdrawn)[2]).filter(Boolean)
+          .sort((a, b) => b.wins - a.wins || b.saldo - a.saldo || b.games - a.games)
+          .slice(0, needThirds)
+          .forEach(r => ids.add(r.p.id));
+      }
+      return ids;
+    }
+
+    const KO_NAMES = { 16: 'Oitavas', 8: 'Quartas', 4: 'Semis', 2: 'Final' };
+    const tagOf = m => m.id === 'KO-3P' ? '3º lugar'
+      : m.phase === 'ko' ? (m.roundSize === 2 ? 'Final' : `${KO_NAMES[m.roundSize] ?? 'KO'} ${m.label}`)
+      : `${m.group}·R${m.round}`;
+
+    function gameRow(g) {
+      const done = g.status === 'done';
+      const winA = done && g.scoreA > g.scoreB;
+      const winB = done && g.scoreB > g.scoreA;
+      const playing = g.status === 'playing';
+      const court = SNAP.db.courts.find(c => c.id === g.courtId);
+      const noScore = g.status === 'queued' || g.status === 'waiting' ||
+        (playing && !g.scoreA && !g.scoreB);
+      const score = noScore
+        ? '<span class="s vs">vs</span>'
+        : `<span class="s ${playing ? 'on' : ''}">${g.wo ? 'WO' : `${g.scoreA}×${g.scoreB}`}</span>`;
+      return `
+        <div class="g ${playing ? 'playing' : ''}">
+          <span class="tag">${tagOf(g)}${playing && court ? `<br><span class="court">${esc(court.name)}</span>` : ''}</span>
+          <span class="t ${winA ? 'win' : ''} ${winB ? 'lose' : ''}">${team(g.teamA)}</span>
+          ${score}
+          <span class="t ${winB ? 'win' : ''} ${winA ? 'lose' : ''}">${team(g.teamB)}</span>
+        </div>`;
+    }
+
+    /* ---------- aba JOGOS ---------- */
+    function tabJogos() {
+      const games = SNAP.db.games;
+      const playing = games.filter(g => g.status === 'playing');
+      const groupGames = games.filter(g => !g.phase);
+      const ko = games.filter(g => g.phase === 'ko' && !g.bye);
+      const final = games.find(g => g.id === 'KO-2-0');
+      const third = games.find(g => g.id === 'KO-3P');
+      const champs = final?.status === 'done'
+        ? (final.scoreA > final.scoreB ? final.teamA : final.teamB) : null;
+
+      let html = '';
+      if (champs) {
+        html += `<div class="card"><div class="champion">🏆 ${team(champs)}<small>Campeões da etapa</small>
+          ${third?.status === 'done' ? `<small>3º: ${team(third.scoreA > third.scoreB ? third.teamA : third.teamB)}</small>` : ''}
+        </div></div>`;
+      }
+      // com campeão definido, "agora em quadra" não faz mais sentido
+      if (!champs) {
+        html += `<div class="card"><h2>Agora em quadra</h2>${
+          playing.map(gameRow).join('') || '<div class="empty">Nenhum jogo em andamento.</div>'}</div>`;
+      }
+      if (ko.length) {
+        html += `<div class="card"><h2>Mata-mata</h2>${ko.map(gameRow).join('')}</div>`;
+      }
+      html += `<div class="card"><h2>Fase de grupos</h2>${
+        groupGames.map(gameRow).join('') || '<div class="empty">Sem jogos ainda.</div>'}</div>`;
+      return html;
+    }
+
+    /* ---------- aba ATLETAS ---------- */
+    function tabAtletas() {
+      const groups = SNAP.groups ?? [];
+      if (!groups.length) {
+        return '<div class="card"><div class="empty">Grupos ainda não sorteados.</div></div>';
+      }
+      const qual = qualifiedIds();
+      return `<div class="card"><h2>Atletas · toque para ver o perfil</h2>${groups.map(letter => `
+        <div class="group-head">Grupo ${letter}</div>
+        <table>
+          <thead><tr><th></th><th>Atleta</th><th class="num">J</th><th class="num">V</th><th class="num">Sal</th><th class="num">G</th></tr></thead>
+          <tbody>${(rankingReady(letter)
+              ? standings(letter)
+              : standings(letter).slice().sort((a, b) => a.p.name.localeCompare(b.p.name))
+            ).map((r, i) => {
+            const ready = rankingReady(letter);
+            const medal = !ready ? '' : i === 0 ? 'm1' : i === 1 ? 'm2' : i === 2 ? 'm3' : '';
+            return `
+            <tr data-player="${r.p.id}">
+              <td>${!ready ? '<span style="color:var(--muted)">–</span>'
+                : medal ? `<span class="medal ${medal}">${i + 1}º</span>` : `${i + 1}º`}</td>
+              <td class="${r.p.withdrawn ? 'withdrawn' : ''}">${
+                qual.has(r.p.id) ? `<b>${esc(r.p.name)}</b> <span class="qcheck">✓</span>` : esc(r.p.name)
+              }</td>
+              <td class="num">${r.j}</td><td class="num"><b>${r.wins}</b></td>
+              <td class="num">${r.saldo > 0 ? '+' : ''}${r.saldo}</td><td class="num">${r.games}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`).join('')}</div>`;
+    }
+
+    /* ---------- aba RANKING (temporada) ---------- */
+    function tabRanking() {
+      const seasons = SNAP.db.seasons ?? [];
+      const season = seasons.find(s => s.id === SNAP.db.event.seasonId) ??
+        seasons.find(s => s.stages.length) ?? seasons[0];
+      if (!season) {
+        return '<div class="card"><div class="empty">Nenhuma temporada configurada.</div></div>';
+      }
+      if (!season.stages.length) {
+        return `<div class="card"><h2>${esc(season.name)}</h2>
+          <div class="empty">Nenhuma etapa somada ainda.</div></div>`;
+      }
+      const names = new Set();
+      season.stages.forEach(st => Object.keys(st.points).forEach(n => names.add(n)));
+      const rows = [...names].map(name => {
+        const per = season.stages.map(st => st.points[name] ?? 0);
+        const total = per.reduce((a, b) => a + b, 0);
+        const played = per.filter(p => p > 0).length;
+        return {
+          name, per, total, played,
+          pct: played ? Math.round(total / (played * season.points.champion) * 100) : 0,
+          wins: per.filter(p => p === season.points.champion).length,
+          finals: per.filter(p => p >= season.points.final).length,
+        };
+      }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+
+      const stageHead = season.stages.map(st => {
+        const d = st.date ? new Date(`${st.date}T12:00:00`) : null;
+        const dm = d && !Number.isNaN(d.getTime())
+          ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(d)
+          : '';
+        return `<th class="num" title="${esc(st.name)}">${dm ? `${st.n}ª - ${dm}` : `${st.n}ª`}</th>`;
+      }).join('');
+      const cols = 7 + season.stages.length;
+      const cutRow = label =>
+        `<tr class="cut-row"><td colspan="${cols}">✂ ${label}</td></tr>`;
+
+      return `<div class="card">
+        <h2>${esc(season.name)} · Top 8 joga o Super 8${season.super16 ? ' · Top 16 o Super 16' : ''}</h2>
+        <div style="overflow-x:auto">
+        <table class="pts-table">
+          <thead><tr>
+            <th class="num">#</th><th>Atleta</th>
+            <th class="num">Pts</th><th class="num">Etapas</th><th class="num">%</th>
+            <th class="num">Vit.</th><th class="num">Fin.</th>
+            ${stageHead}
+          </tr></thead>
+          <tbody>${rows.map((r, i) => `
+            <tr class="${i < 8 ? 'in-cut' : ''}" data-player-name="${esc(r.name)}">
+              <td class="num">${i + 1}</td>
+              <td style="overflow:hidden;text-overflow:ellipsis;max-width:9rem">${esc(r.name)}</td>
+              <td class="num"><b>${r.total}</b></td>
+              <td class="num">${r.played}</td>
+              <td class="num">${r.pct}%</td>
+              <td class="num">${r.wins}</td>
+              <td class="num">${r.finals}</td>
+              ${r.per.map(p => `<td class="num">${p || '<span style="color:var(--muted)">0</span>'}</td>`).join('')}
+            </tr>
+            ${i === 7 && rows.length > 8 ? cutRow('Corte Super 8') : ''}
+            ${season.super16 && i === 15 && rows.length > 16 ? cutRow('Corte Super 16') : ''}`).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>`;
+    }
+
+    /* ---------- aba MEU PERFIL ---------- */
+    function playerGames(id) {
+      return SNAP.db.games.filter(g =>
+        (g.teamA?.includes(id) || g.teamB?.includes(id)) && !g.bye);
+    }
+
+    function nextGameInfo(id) {
+      const queue = SNAP.db.games.filter(g => g.status === 'queued');
+      const mine = SNAP.db.games.find(g =>
+        (g.status === 'queued' || g.status === 'waiting') &&
+        (g.teamA?.includes(id) || g.teamB?.includes(id)));
+      if (!mine) return null;
+      const posQueue = queue.findIndex(g => g.id === mine.id);
+      return { game: mine, posQueue: posQueue >= 0 ? posQueue + 1 : null };
+    }
+
+    function needHint(p) {
+      if (p.withdrawn) return { cls: 'bad', text: 'Desistiu da etapa.' };
+      if (!p.group) return { cls: 'warn', text: 'Aguardando sorteio dos grupos.' };
+      // etapa encerrada (campeão definido): mostra o resultado final
+      const koAll = SNAP.db.games.filter(g => g.phase === 'ko' && !g.bye);
+      const finalG = koAll.find(g => g.id === 'KO-2-0');
+      if (finalG?.status === 'done') {
+        const winF = finalG.scoreA > finalG.scoreB ? finalG.teamA : finalG.teamB;
+        const loseF = finalG.scoreA > finalG.scoreB ? finalG.teamB : finalG.teamA;
+        if (winF?.includes(p.id)) return { cls: 'ok', text: 'Campeão da etapa! 🏆' };
+        if (loseF?.includes(p.id)) return { cls: 'ok', text: 'Vice-campeão da etapa.' };
+        const tp = koAll.find(g => g.id === 'KO-3P');
+        if (tp?.status === 'done') {
+          const winT = tp.scoreA > tp.scoreB ? tp.teamA : tp.teamB;
+          const loseT = tp.scoreA > tp.scoreB ? tp.teamB : tp.teamA;
+          if (winT?.includes(p.id)) return { cls: 'ok', text: '3º lugar da etapa.' };
+          if (loseT?.includes(p.id)) return { cls: 'warn', text: '4º lugar da etapa.' };
+        }
+        if (koAll.some(g => g.teamA?.includes(p.id) || g.teamB?.includes(p.id))) {
+          return { cls: 'warn', text: 'Eliminado no mata-mata.' };
+        }
+        return { cls: 'bad', text: 'Eliminado na fase de grupos.' };
+      }
+      if (!rankingReady(p.group)) {
+        const c = groupPlayedCount(p.group);
+        return { cls: 'warn', text: `Grupo com ${c === 0 ? 'nenhum jogo concluído' : 'só 1 jogo concluído'} — colocação e cenários aparecem a partir do 2º jogo.` };
+      }
+      const rows = standings(p.group);
+      const idx = rows.findIndex(r => r.p.id === p.id);
+      const mine = rows[idx];
+      const done = SNAP.db.games.filter(g => g.group === p.group).every(g => g.status === 'done');
+      const left = 3 - mine.j;
+      if (done) {
+        return idx < 2
+          ? { cls: 'ok', text: `Classificado em ${idx + 1}º do grupo! 🎉` }
+          : idx === 2
+            ? { cls: 'warn', text: '3º do grupo — pode entrar como melhor 3º, aguarde a chave.' }
+            : { cls: 'bad', text: 'Eliminado na fase de grupos.' };
+      }
+      if (idx < 2) {
+        return { cls: 'ok', text: `Hoje em ${idx + 1}º — mantendo o desempenho, classifica. ${left} jogo${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''}.` };
+      }
+      const cut = rows[1];
+      const dw = cut.wins - mine.wins;
+      const ds = cut.saldo - mine.saldo;
+      const need = dw > 0
+        ? `precisa de +${dw} vitória${dw > 1 ? 's' : ''}`
+        : `mesmas vitórias do 2º — precisa virar o saldo (+${ds + 1})`;
+      return { cls: 'warn', text: `Fora da zona (${idx + 1}º): ${need}. ${left} jogo${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''}.` };
+    }
+
+    function profileHtml(p, isMe) {
+      const st = p.group
+        ? standings(p.group).find(r => r.p.id === p.id)
+        : { j: 0, wins: 0, saldo: 0, games: 0 };
+      const pos = posOf(p);
+      const live = SNAP.db.games.find(g => g.status === 'playing' &&
+        (g.teamA?.includes(p.id) || g.teamB?.includes(p.id)));
+      const next = nextGameInfo(p.id);
+      const hint = needHint(p);
+      const games = playerGames(p.id);
+
+      let html = `
+        <div class="card">
+          <div class="me-head">
+            <span class="avatar">${esc(p.name[0])}</span>
+            <div>
+              <strong class="${p.withdrawn ? 'withdrawn' : ''}">${esc(p.name)}</strong>
+              <span class="sub">${p.group
+                ? `Grupo ${p.group}${rankingReady(p.group) ? ` · ${pos}º colocado` : ''}`
+                : 'Sem grupo'}</span>
+            </div>
+            ${isMe
+              ? '<button data-action="trocar">trocar</button>'
+              : `<button data-action="sou-eu" data-id="${p.id}">este sou eu</button>`}
+          </div>
+          <div class="stats">
+            <div><b>${st.j}</b><span>Jogos</span></div>
+            <div><b>${st.wins}</b><span>Vitórias</span></div>
+            <div><b>${st.saldo > 0 ? '+' : ''}${st.saldo}</b><span>Saldo</span></div>
+            <div><b>${st.games}</b><span>Games</span></div>
+          </div>
+          <div class="hint-line ${hint.cls}">${hint.text}</div>
+        </div>`;
+
+      if (live) {
+        html += `<div class="card"><h2>Em quadra agora</h2>${gameRow(live)}</div>`;
+      }
+      if (next) {
+        const g = next.game;
+        const inA = g.teamA?.includes(p.id);
+        const partner = (inA ? g.teamA : g.teamB)?.filter(x => x !== p.id).map(nameOf).join(' & ');
+        const opp = team(inA ? g.teamB : g.teamA);
+        html += `<div class="card"><h2>Próximo jogo</h2>
+          ${gameRow(g)}
+          <div class="hint-line">${g.teamA ?
+            `Com <b>${esc(partner ?? '?')}</b> vs ${opp}` : 'Adversários a definir'}${
+            next.posQueue ? ` · ${next.posQueue}º da fila` : ''}${
+            g.status === 'waiting' ? ' · aguardando definição' : ''}</div>
+        </div>`;
+      }
+      if (games.length) {
+        html += `<div class="card"><h2>Resultados</h2>${games.map(gameRow).join('')}</div>`;
+      }
+      const tbs = (SNAP.db.tiebreaks ?? []).filter(t => t.players.includes(p.id));
+      if (tbs.length) {
+        html += `<div class="card"><h2>Desempates</h2>${tbs.map(tb => `
+          <div class="hint-line">${esc(tb.type)} vs ${tb.players.filter(x => x !== p.id).map(nameOf).map(esc).join(' e ')} — ${
+            tb.winnerId == null ? 'pendente' : tb.winnerId === p.id ? '<b class="win">venceu</b>' : 'perdeu'}</div>`).join('')}</div>`;
+      }
+      return html;
+    }
+
+    function tabPerfil() {
+      const target = state.viewId ?? state.meId;
+      const p = target ? P(target) : null;
+      if (p) return profileHtml(p, !state.viewId && state.meId === p.id);
+
+      const q = deaccent(state.search.trim());
+      const matches = q
+        ? SNAP.db.players.filter(pl => deaccent(pl.name).includes(q)).slice(0, 12)
+        : [];
+      return `
+        <div class="card">
+          <h2>Quem é você?</h2>
+          <div class="search">
+            <input id="me-search" type="search" placeholder="Digite seu nome…" value="${esc(state.search)}" autocomplete="off">
+          </div>
+          ${matches.map(pl => `
+            <div class="pick" data-action="sou-eu" data-id="${pl.id}">
+              ${esc(pl.name)} <small>${pl.group ? `· Grupo ${pl.group}` : ''}</small>
+            </div>`).join('')}
+          ${q && !matches.length ? '<div class="empty">Nenhum atleta com esse nome.</div>' : ''}
+        </div>`;
+    }
+
+    /* ---------- render ---------- */
+    function render() {
+      if (!SNAP) return;
+      const db = SNAP.db;
+      $('#ev-name').textContent = db.event.name || 'Evento';
+      const evDate = db.event.date
+        ? new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+            .format(new Date(`${db.event.date}T12:00:00`))
+        : '';
+      $('#ev-sub').textContent =
+        [db.event.edition, evDate, db.event.venue].filter(Boolean).join(' · ');
+
+      // etapa encerrada: sem badge "ao vivo"
+      const finalDone = (db.games ?? []).find(g => g.id === 'KO-2-0')?.status === 'done';
+      document.querySelector('.live').hidden = finalDone;
+
+      const html = state.tab === 'jogos' ? tabJogos()
+        : state.tab === 'atletas' ? tabAtletas()
+        : state.tab === 'ranking' ? tabRanking()
+        : tabPerfil();
+      $('#content').innerHTML = html;
+      $('#updated').textContent = `Atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+
+      const cats = [];
+      for (const s of db.sponsors ?? []) {
+        let c = cats.find(x => x.name === s.category);
+        if (!c) cats.push(c = { name: s.category, items: [] });
+        c.items.push(s);
+      }
+      $('#sponsors').innerHTML = cats.map(c => `
+        <div class="sp-cat">
+          <span class="sp-cat-name">${esc(c.name)}</span>
+          <div class="sp-logos">${c.items.map(s =>
+            `<img src="${esc(s.url)}" alt="${esc(c.name)}" loading="lazy">`).join('')}</div>
+        </div>`).join('');
+
+      document.querySelectorAll('.tabbar button').forEach(b =>
+        b.classList.toggle('on', b.dataset.tab === state.tab));
+
+      const inp = $('#me-search');
+      if (inp && state.searchFocus) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    }
+
+    /* ---------- eventos ---------- */
+    document.addEventListener('click', e => {
+      const tabBtn = e.target.closest('.tabbar button');
+      if (tabBtn) { state.tab = tabBtn.dataset.tab; state.viewId = null; render(); return; }
+
+      const act = e.target.closest('[data-action]');
+      if (act?.dataset.action === 'sou-eu') {
+        state.meId = Number(act.dataset.id);
+        localStorage.setItem('placar.me', state.meId);
+        state.viewId = null; state.tab = 'perfil';
+        render(); return;
+      }
+      if (act?.dataset.action === 'trocar') {
+        state.meId = null; state.search = '';
+        localStorage.removeItem('placar.me');
+        render(); return;
+      }
+      const row = e.target.closest('tr[data-player]');
+      if (row) { state.viewId = Number(row.dataset.player); state.tab = 'perfil'; render(); }
+    });
+
+    document.addEventListener('input', e => {
+      if (e.target.id === 'me-search') {
+        state.search = e.target.value;
+        state.searchFocus = true;
+        render();
+        state.searchFocus = false;
+      }
+    });
+
+    /* ---------- dados ---------- */
+    let splashChecked = false;
+    function maybeSplash() {
+      if (splashChecked) return;
+      splashChecked = true;
+      const today = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem('placar.splash') === today) return;
+      const sponsors = SNAP.db.sponsors ?? [];
+      if (!sponsors.length) return;
+      const cats = [];
+      for (const s of sponsors) {
+        let c = cats.find(x => x.name === s.category);
+        if (!c) cats.push(c = { name: s.category, items: [] });
+        c.items.push(s);
+      }
+      const el = document.createElement('div');
+      el.className = 'splash';
+      el.innerHTML = `
+        <div class="splash-body">
+          <h1>${esc(SNAP.db.event.name || 'Liga')}</h1>
+          <div class="sub">${esc(SNAP.db.event.edition ?? '')}</div>
+          ${cats.map(c => `
+            <div class="sp-cat">
+              <span class="sp-cat-name">${esc(c.name)}</span>
+              <div class="sp-logos">${c.items.map(s =>
+                `<img src="${esc(s.url)}" alt="${esc(c.name)}">`).join('')}</div>
+            </div>`).join('')}
+        </div>
+        <button class="splash-btn">Acessar Liga</button>`;
+      document.body.appendChild(el);
+      document.body.style.overflow = 'hidden'; // scroll só dentro do splash
+      el.querySelector('.splash-btn').addEventListener('click', () => {
+        localStorage.setItem('placar.splash', today);
+        el.remove();
+        document.body.style.overflow = '';
+      });
+    }
+
+    async function load() {
+      let q = sb.from('event_snapshots')
+        .select('data, updated_at').eq('is_public', true);
+      if (OWNER) q = q.eq('owner_id', OWNER);
+      const { data, error } = await q
+        .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+      if (error || !data) {
+        $('#content').innerHTML =
+          `<div class="card"><div class="empty">Placar indisponível${error ? ` (${esc(error.message)})` : ''}.</div></div>`;
+        return;
+      }
+      SNAP = data.data;
+      render();
+      maybeSplash();
+    }
+
+    sb.channel('placar')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'event_snapshots',
+          ...(OWNER ? { filter: `owner_id=eq.${OWNER}` } : {}) },
+        payload => {
+          if (payload.new?.data) { SNAP = payload.new.data; render(); }
+        })
+      .subscribe();
+
+    load();
+    setInterval(load, 60_000); // fallback se o realtime cair
+  </script>
+</body>
+</html>

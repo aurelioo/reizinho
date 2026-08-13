@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reizinho — Arena Aldeia</title>
+
+  <!-- Web Awesome (CDN só no mockup; na extension o bundle será local por causa do CSP do MV3) -->
+  <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.11.0/styles/themes/default.css" />
+  <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.11.0/styles/utilities.css" />
+  <script type="module" src="https://ka-f.webawesome.com/webawesome@3.11.0/webawesome.loader.js"></script>
+
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <wa-page mobile-breakpoint="920px">
+
+    <!-- ============ MENU (sidebar esquerda) ============ -->
+    <nav slot="navigation" class="app-nav">
+      <img class="brand-logo" src="img/logo.jpg" alt="Aldeia Beach Sports" />
+
+      <button class="nav-search" type="button" data-action="open-spotlight">
+        <wa-icon name="magnifying-glass"></wa-icon>
+        <span>Buscar</span>
+        <kbd>/</kbd>
+      </button>
+
+      <div class="nav-label">Torneio</div>
+      <a class="nav-item" data-action="nav" data-view="players">
+        <wa-icon name="users"></wa-icon> Atletas
+      </a>
+      <a class="nav-item active" data-action="nav" data-view="games">
+        <wa-icon name="table-tennis-paddle-ball"></wa-icon> Jogos
+      </a>
+      <a class="nav-item" data-action="nav" data-view="groups">
+        <wa-icon name="table-cells-large"></wa-icon> Grupos &amp; Jogos
+      </a>
+      <a class="nav-item" data-action="nav" data-view="bracket">
+        <wa-icon name="diagram-project"></wa-icon> Mata-mata
+      </a>
+      <a class="nav-item" data-action="nav" data-view="season">
+        <wa-icon name="ranking-star"></wa-icon> Temporada
+      </a>
+
+      <div class="nav-label">Evento</div>
+      <a class="nav-item" data-action="nav" data-view="courts">
+        <wa-icon name="volleyball"></wa-icon> Quadras
+      </a>
+      <a class="nav-item" data-action="copy-athlete-link" id="nav-athlete-link">
+        <wa-icon name="link"></wa-icon> <span>Link do Atleta</span>
+      </a>
+      <a class="nav-item" data-action="nav" data-view="settings">
+        <wa-icon name="gear"></wa-icon> Configurações
+      </a>
+
+    </nav>
+
+    <!-- ============ CONTEÚDO ============ -->
+    <main class="app-main">
+
+      <!-- cabeçalho só de impressão: temporada + etapa/data -->
+      <div id="print-header">
+        <strong id="print-title"></strong>
+        <span id="print-sub"></span>
+      </div>
+
+      <section class="view" id="view-games">
+        <div class="view-head row">
+          <div>
+            <h2>Jogos</h2>
+          </div>
+          <wa-button appearance="outlined" data-action="print-view">
+            <wa-icon slot="start" name="print"></wa-icon> Imprimir / PDF
+          </wa-button>
+        </div>
+        <div class="panel games-panel" id="games-list"></div>
+      </section>
+
+      <section class="view" id="view-players" hidden>
+        <div class="view-head row">
+          <div>
+            <h2>Atletas</h2>
+          </div>
+          <div class="head-actions">
+            <wa-button variant="warning" appearance="outlined" data-action="reset-scores">
+              <wa-icon slot="start" name="rotate-left"></wa-icon> Resetar placares
+            </wa-button>
+            <wa-button variant="danger" appearance="outlined" data-action="delete-all-players">
+              <wa-icon slot="start" name="trash"></wa-icon> Deletar todos
+            </wa-button>
+            <wa-button variant="brand" data-action="open-add-player">
+              <wa-icon slot="start" name="user-plus"></wa-icon> Adicionar atleta
+            </wa-button>
+          </div>
+        </div>
+
+        <div id="players-empty" hidden></div>
+
+        <div class="toolbar" id="players-toolbar">
+          <wa-input id="player-search" placeholder="Buscar atleta…" size="s" class="grow">
+            <wa-icon slot="start" name="magnifying-glass"></wa-icon>
+          </wa-input>
+          <wa-select id="player-group-filter" size="s" value="all">
+            <wa-option value="all">Todos os grupos</wa-option>
+          </wa-select>
+          <wa-button size="s" appearance="outlined" data-action="open-import">
+            <wa-icon slot="start" name="file-import"></wa-icon> Importar lista
+          </wa-button>
+          <wa-button size="s" variant="brand" data-action="sortear">
+            <wa-icon slot="start" name="shuffle"></wa-icon> Sortear grupos
+          </wa-button>
+        </div>
+        <div class="panel table-wrap" id="players-table-panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th title="Presença" data-sort="present"><wa-icon name="user-check"></wa-icon></th>
+                <th data-sort="name">Atleta</th><th data-sort="group">Grupo</th>
+                <th class="num" data-sort="played">J</th>
+                <th class="num" data-sort="wins">V</th>
+                <th class="num" data-sort="saldo">Saldo</th>
+                <th class="num" data-sort="pos">Pos</th>
+              </tr>
+            </thead>
+            <tbody id="players-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="view-groups" hidden>
+        <div class="view-head row">
+          <div>
+            <h2>Grupos &amp; Jogos</h2>
+          </div>
+          <wa-button appearance="outlined" id="btn-copy-groups" data-action="open-groups-summary" hidden>
+            <wa-icon slot="start" name="copy"></wa-icon> Copiar grupos
+          </wa-button>
+        </div>
+        <div id="groups-host"></div>
+      </section>
+
+      <section class="view" id="view-courts" hidden>
+        <div class="view-head">
+          <h2>Quadras</h2>
+        </div>
+        <div class="toolbar">
+          <wa-input id="court-name" placeholder="Nome da quadra (ex: Quadra 3, Central…)" class="grow">
+            <wa-icon slot="start" name="volleyball"></wa-icon>
+          </wa-input>
+          <wa-button variant="brand" data-action="add-court">
+            <wa-icon slot="start" name="plus"></wa-icon> Adicionar
+          </wa-button>
+        </div>
+        <div class="panel" id="courts-list"></div>
+      </section>
+
+      <section class="view" id="view-bracket" hidden>
+        <div class="view-head row">
+          <div>
+            <h2>Mata-mata</h2>
+          </div>
+          <wa-button appearance="outlined" data-action="print-view">
+            <wa-icon slot="start" name="print"></wa-icon> Imprimir / PDF
+          </wa-button>
+        </div>
+        <div class="bracket" id="bracket"></div>
+        <div id="ko-games-section" hidden>
+          <h3 class="section-title"><wa-icon name="table-tennis-paddle-ball"></wa-icon> Jogos do mata-mata</h3>
+          <div class="panel games-panel" id="ko-games-list"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-season" hidden>
+        <div class="view-head row">
+          <div>
+            <h2>Temporada</h2>
+          </div>
+          <wa-button appearance="outlined" data-action="print-season">
+            <wa-icon slot="start" name="print"></wa-icon> Imprimir / PDF
+          </wa-button>
+        </div>
+        <div id="season-host"></div>
+      </section>
+
+      <section class="view" id="view-settings" hidden>
+        <div class="view-head row">
+          <div>
+            <h2>Configurações</h2>
+          </div>
+          <wa-button variant="brand" data-action="open-template">
+            <wa-icon slot="start" name="plus"></wa-icon> Novo template
+          </wa-button>
+        </div>
+        <h3 class="section-title"><wa-icon name="sliders"></wa-icon> Templates de evento</h3>
+        <div class="tpl-list" id="tpl-list"></div>
+
+        <h3 class="section-title"><wa-icon name="ranking-star"></wa-icon> Temporadas</h3>
+        <div class="panel sync-panel">
+          <div class="form-stack">
+            <wa-input id="se-name" label="Nome da temporada" placeholder="Temporada 2026"></wa-input>
+            <label class="field-label">Pontuação por etapa</label>
+            <div class="pts-grid">
+              <wa-input id="se-p-part" label="Participação" type="number" value="250"></wa-input>
+              <wa-input id="se-p-ko" label="Mata-mata" type="number" value="400"></wa-input>
+              <wa-input id="se-p-fourth" label="4º lugar" type="number" value="500"></wa-input>
+              <wa-input id="se-p-third" label="3º lugar" type="number" value="550"></wa-input>
+              <wa-input id="se-p-final" label="Vice" type="number" value="750"></wa-input>
+              <wa-input id="se-p-champ" label="Campeão" type="number" value="1000"></wa-input>
+            </div>
+            <wa-checkbox id="se-s16">Tem Super 16 (segunda linha de corte)</wa-checkbox>
+            <p class="form-error" id="se-error" hidden>Informe o nome da temporada.</p>
+            <div class="sync-actions">
+              <wa-button variant="brand" data-action="season-create">
+                <wa-icon slot="start" name="plus"></wa-icon> Criar temporada
+              </wa-button>
+              <wa-button appearance="outlined" variant="warning" data-action="demo-stage"
+                title="Soma uma etapa simulada com seus atletas pra ver a Pontuação; clicar de novo remove">
+                <wa-icon slot="start" name="flask"></wa-icon> Etapa demo
+              </wa-button>
+              <wa-button appearance="outlined" variant="warning" data-action="simulate-scores"
+                title="Preenche todos os placares pendentes da etapa atual (grupos + mata-mata) — sobra só o Encerrar etapa">
+                <wa-icon slot="start" name="wand-magic-sparkles"></wa-icon> Simular placares
+              </wa-button>
+            </div>
+          </div>
+          <div id="season-list"></div>
+        </div>
+
+        <h3 class="section-title"><wa-icon name="cloud"></wa-icon> Sincronização (Supabase)</h3>
+        <div class="panel sync-panel">
+          <div class="form-stack">
+            <wa-input id="sb-url" label="Project URL" placeholder="https://xxxx.supabase.co"></wa-input>
+            <wa-input id="sb-key" label="Anon key" type="password"></wa-input>
+            <wa-input id="sb-placar" label="URL pública do placar (vazio = GitHub Pages)"
+              placeholder="https://aurelioo.github.io/reizinho-placar/"></wa-input>
+            <wa-checkbox id="sb-enabled">Ativar sincronização</wa-checkbox>
+            <div class="sync-actions">
+              <wa-button variant="brand" data-action="sync-save">
+                <wa-icon slot="start" name="cloud-arrow-up"></wa-icon> Salvar e conectar
+              </wa-button>
+              <span id="sync-status" class="muted"></span>
+            </div>
+            <p class="muted sync-hint">
+              Rode <code>db/sync-snapshot.sql</code> no SQL Editor do projeto e ative
+              Anonymous sign-in (Auth → Providers). Local-first: sem internet, tudo continua funcionando.
+            </p>
+          </div>
+        </div>
+
+        <h3 class="section-title"><wa-icon name="handshake"></wa-icon> Patrocinadores &amp; Apoiadores</h3>
+        <div class="panel sync-panel">
+          <div class="form-stack">
+            <wa-input id="sp-category" label="Categoria (campo livre)"
+              placeholder="Patrocinador, Apoio, Parceiro…"></wa-input>
+            <label class="field-label" for="sp-file">Logo (imagem)</label>
+            <input type="file" id="sp-file" accept="image/*" class="file-input">
+            <div class="sync-actions">
+              <wa-button variant="brand" data-action="sponsor-upload">
+                <wa-icon slot="start" name="upload"></wa-icon> Enviar logo
+              </wa-button>
+              <span id="sp-status" class="muted"></span>
+            </div>
+            <p class="muted sync-hint">Sobe pro bucket <code>logos</code> do Supabase
+              (rode <code>db/logos-bucket.sql</code> uma vez). Aparecem no fim de todas as telas e no placar público.</p>
+          </div>
+          <div id="sponsor-list"></div>
+        </div>
+
+        <h3 class="section-title"><wa-icon name="database"></wa-icon> Dados locais</h3>
+        <wa-button appearance="outlined" variant="danger" data-action="wipe-local">
+          <wa-icon slot="start" name="trash"></wa-icon> Limpar dados locais
+        </wa-button>
+      </section>
+
+
+      <footer id="sponsors-footer" hidden></footer>
+    </main>
+
+    <!-- ============ MISSION CONTROL (sidebar direita) ============ -->
+    <aside slot="aside" class="mission">
+      <header class="mission-head">
+        <div class="event-card" data-action="open-event" title="Editar evento">
+          <wa-icon name="umbrella-beach"></wa-icon>
+          <div>
+            <strong id="event-card-title">—</strong>
+            <span id="event-card-sub"></span>
+          </div>
+        </div>
+        <wa-button appearance="plain" size="s" data-action="toggle-dark" title="Alternar tema">
+          <wa-icon name="moon"></wa-icon>
+        </wa-button>
+      </header>
+      <div class="mission-status">
+        <wa-badge id="stage-badge" variant="brand">Fase de Grupos</wa-badge>
+        <span class="chip chip-link" id="courts-chip" data-action="nav" data-view="courts"
+          title="Gerenciar quadras"><wa-icon name="volleyball"></wa-icon> 0/2 quadras em uso</span>
+      </div>
+      <div id="mission-body"></div>
+    </aside>
+
+  </wa-page>
+
+  <!-- Mission Control no mobile: FAB abre/fecha o painel -->
+  <button class="mission-fab" type="button" data-action="toggle-mission" title="Mission Control">
+    <wa-icon name="list-check"></wa-icon>
+  </button>
+
+  <!-- ============ DIALOGS ============ -->
+  <wa-dialog id="dlg-event" label="Criar evento">
+    <div class="form-stack">
+      <wa-input id="ev-name" label="Nome do evento" placeholder="Reizinho de Quarta"></wa-input>
+      <wa-select id="ev-season" label="Temporada" value=""></wa-select>
+      <wa-input id="ev-edition" label="Etapa" placeholder="3ª Etapa"></wa-input>
+      <wa-input id="ev-date" label="Data" type="date"></wa-input>
+      <div>
+        <label class="field-label">Template de configurações</label>
+        <div class="tpl-picker" id="tpl-picker"></div>
+      </div>
+      <p class="form-error" id="ev-error" hidden>Informe o nome do evento.</p>
+    </div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="save-event">
+      <wa-icon slot="start" name="calendar-plus"></wa-icon> Salvar evento
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-template" label="Novo template" style="--width: 560px;">
+    <div class="form-stack">
+      <wa-input id="tpl-name" label="Nome do template" placeholder="Reizinho Clássico"></wa-input>
+      <wa-select id="tpl-format" label="Formato do evento" value="reizinho">
+        <wa-option value="reizinho">Reizinho</wa-option>
+        <wa-option value="super8">Super 8</wa-option>
+        <wa-option value="dupla-fixa">Dupla fixa</wa-option>
+      </wa-select>
+      <wa-select id="tpl-thirds" label="Melhores 3ºs colocados" value="performance">
+        <wa-option value="performance">Por desempenho geral</wa-option>
+        <wa-option value="group">Melhor colocação no grupo</wa-option>
+      </wa-select>
+      <wa-input id="tpl-tiebreak" label="Critérios de desempate"
+        placeholder="Vitórias → saldo de games → games ganhos"></wa-input>
+      <wa-input id="tpl-games" label="Jogo até (games)" type="number" min="1" max="9" value="4"></wa-input>
+      <wa-checkbox id="tpl-3p" checked>Disputa de 3º lugar</wa-checkbox>
+      <p class="form-error" id="tpl-error" hidden>Informe o nome do template.</p>
+    </div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="save-template">
+      <wa-icon slot="start" name="floppy-disk"></wa-icon> Salvar template
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-player" label="Adicionar atleta">
+    <div class="form-stack">
+      <wa-input id="np-name" label="Nome" placeholder="Nome do atleta"></wa-input>
+      <wa-select id="np-group" label="Grupo" value="A">
+        <wa-option value="A">Grupo A</wa-option>
+        <wa-option value="B">Grupo B</wa-option>
+        <wa-option value="C">Grupo C</wa-option>
+        <wa-option value="D">Grupo D</wa-option>
+      </wa-select>
+      <p class="form-error" id="np-error" hidden>Informe o nome do atleta.</p>
+    </div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="save-player">
+      <wa-icon slot="start" name="user-plus"></wa-icon> Adicionar
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-import" label="Importar jogadores">
+    <div class="form-stack">
+      <wa-textarea id="import-names" rows="8" label="Um nome por linha"
+        placeholder="Rafa&#10;Duda&#10;Marina&#10;…"></wa-textarea>
+      <p class="import-summary muted" id="import-count">Nenhum nome ainda.</p>
+      <p class="form-error" id="import-error" hidden>Nenhum nome válido encontrado.</p>
+    </div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" id="import-submit" data-action="save-import" disabled>
+      <wa-icon slot="start" name="file-import"></wa-icon> <span id="import-btn-label">Importar</span>
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-spotlight" label="Buscar atleta" without-header light-dismiss class="spotlight" style="--width: 560px;">
+    <wa-input id="spotlight-input" size="l" placeholder="Digite o nome do atleta…">
+      <wa-icon slot="start" name="magnifying-glass"></wa-icon>
+    </wa-input>
+    <div class="spotlight-results" id="spotlight-results"></div>
+    <p class="hint spotlight-hint">↵ abre o primeiro resultado · Esc fecha</p>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-athlete" label="Atleta" light-dismiss style="--width: 780px;">
+    <div id="athlete-body"></div>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-draw" label="Sortear grupos" style="--width: 680px;">
+    <p class="muted draw-summary" id="draw-summary"></p>
+    <p class="form-error" id="draw-error" hidden></p>
+    <div class="draw-grid" id="draw-grid"></div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="brand" id="draw-btn" data-action="run-draw">
+      <wa-icon slot="start" name="shuffle"></wa-icon> Sortear
+    </wa-button>
+    <wa-button slot="footer" variant="brand" id="draw-next" data-action="draw-next" hidden>
+      Próximo <wa-icon slot="end" name="arrow-right"></wa-icon>
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-athlete-link" label="Link do Atleta" light-dismiss>
+    <p class="muted link-explain">
+      Compartilhe este link no grupo dos atletas. Nele cada um acompanha os jogos
+      ao vivo, a classificação dos grupos e — na aba <strong>Meu Perfil</strong> —
+      busca o próprio nome pra ver estatísticas, próximo jogo, posição na fila e
+      o que precisa pra classificar. Atualiza sozinho a cada placar lançado.
+    </p>
+    <textarea class="summary-textarea" id="athlete-link-text" rows="3" readonly spellcheck="false"></textarea>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Fechar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="copy-athlete-link-confirm">
+      <wa-icon slot="start" name="copy"></wa-icon> <span id="copy-link-label">Copiar link</span>
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-groups-summary" label="Grupos sorteados">
+    <textarea class="summary-textarea" id="groups-summary-text" readonly spellcheck="false"></textarea>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Fechar</wa-button>
+    <wa-button slot="footer" variant="brand" data-action="copy-groups">
+      <wa-icon slot="start" name="copy"></wa-icon> <span id="copy-groups-label">Copiar</span>
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-courts" label="Quadras do torneio" style="--width: 560px;">
+    <p class="muted draw-summary">Confirme as quadras à disposição pra liberar as chamadas de jogo.</p>
+    <div class="toolbar">
+      <wa-input id="dlg-court-name" placeholder="Nome da quadra (ex: Quadra 3, Central…)" size="s" class="grow">
+        <wa-icon slot="start" name="volleyball"></wa-icon>
+      </wa-input>
+      <wa-button size="s" appearance="outlined" data-action="dlg-add-court">
+        <wa-icon slot="start" name="plus"></wa-icon> Adicionar
+      </wa-button>
+    </div>
+    <div id="dlg-courts-list"></div>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Depois</wa-button>
+    <wa-button slot="footer" variant="brand" id="dlg-courts-confirm" data-action="confirm-courts-start">
+      <wa-icon slot="start" name="circle-check"></wa-icon> Confirmar e iniciar torneio
+    </wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-court-pick" label="Chamar jogo — escolher quadra" light-dismiss>
+    <div class="score-head" id="pick-matchup"></div>
+    <div class="pick-courts" id="pick-courts"></div>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-winner" label="Informar vencedor do desempate">
+    <div class="score-head" id="winner-context"></div>
+    <div class="winner-options" id="winner-options"></div>
+  </wa-dialog>
+
+  <wa-dialog id="dlg-score" label="Registrar placar">
+    <div class="score-head" id="score-context"></div>
+    <div class="score-grid">
+      <span class="score-team" id="score-team-a"></span>
+      <span class="score-vs">vs</span>
+      <span class="score-team" id="score-team-b"></span>
+      <wa-input id="score-a" type="number" min="0" max="9"></wa-input>
+      <span class="score-x">×</span>
+      <wa-input id="score-b" type="number" min="0" max="9"></wa-input>
+    </div>
+    <p class="form-error" id="score-error" hidden>Placar inválido — não pode haver empate.</p>
+    <wa-button slot="footer" appearance="outlined" data-action="close-dialog">Cancelar</wa-button>
+    <wa-button slot="footer" variant="success" data-action="save-score">
+      <wa-icon slot="start" name="circle-check"></wa-icon> Salvar resultado
+    </wa-button>
+  </wa-dialog>
+
+  <script src="js/data.js"></script>
+  <script src="js/repo.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
