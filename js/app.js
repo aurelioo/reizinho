@@ -54,6 +54,11 @@ function teamHtml(ids) {
   return ids.map(nameLink).join(' & ');
 }
 
+/* dupla com um nome por linha (card "Próximo a chamar") */
+function teamLinesHtml(ids) {
+  return ids.map(nameLink).join('<br>');
+}
+
 /* Jogo concluído: vencedora pill verde, perdedora pill vermelha */
 function teamPill(ids, result) {
   return result
@@ -1546,9 +1551,9 @@ function renderMission() {
       <div class="m-card next-card">
         <div class="m-row">${chip}</div>
         <div class="m-match">
-          <span>${teamHtml(next.teamA)}</span>
+          <span>${teamLinesHtml(next.teamA)}</span>
           <strong>vs</strong>
-          <span>${teamHtml(next.teamB)}</span>
+          <span>${teamLinesHtml(next.teamB)}</span>
         </div>
         ${court
           ? `<wa-button size="s" variant="brand" data-action="call-game" data-game="${next.id}">
