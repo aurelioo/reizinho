@@ -1469,6 +1469,28 @@ function renderMission() {
   const court = freeCourts()[0];
   const final = DB.games.find(m => m.id === 'KO-2-0');
 
+  // Campeão definido: só o card de campeões (com Encerrar etapa / Ver chaveamento)
+  if (inKo && final?.status === 'done') {
+    $('.mission-status').hidden = true;
+    const third = DB.games.find(m => m.id === 'KO-3P');
+    const season = eventSeason();
+    $('#mission-body').innerHTML = `
+      <div class="m-card next-card">
+        <p class="champion-line"><wa-icon name="crown"></wa-icon>
+          <strong>Campeões: ${teamHtml(winnerOf(final))}</strong></p>
+        ${third?.status === 'done' ? `<p class="muted">3º lugar: ${teamHtml(winnerOf(third))}</p>` : ''}
+        ${season && !DB.event.stageClosed ? `
+          <wa-button size="s" variant="warning" data-action="close-stage">
+            <wa-icon slot="start" name="ranking-star"></wa-icon> Encerrar etapa · somar pontos
+          </wa-button>` : ''}
+        ${DB.event.stageClosed ? '<p class="hint"><wa-icon name="circle-check"></wa-icon> Pontos somados à temporada</p>' : ''}
+        <wa-button size="s" variant="brand" data-action="nav" data-view="bracket">
+          <wa-icon slot="start" name="trophy"></wa-icon> Ver chaveamento
+        </wa-button>
+      </div>`;
+    return;
+  }
+
   const nowBlock = playingGames().map(g => {
     const c = DB.courts.find(x => x.id === g.courtId);
     const tag = g.offCourt
@@ -1494,23 +1516,6 @@ function renderMission() {
   let nextBlock;
   if (!total) {
     nextBlock = '<p class="muted m-empty">Cadastre atletas e sorteie os grupos para gerar os jogos.</p>';
-  } else if (inKo && final?.status === 'done') {
-    const third = DB.games.find(m => m.id === 'KO-3P');
-    const season = eventSeason();
-    nextBlock = `
-      <div class="m-card next-card">
-        <p class="champion-line"><wa-icon name="crown"></wa-icon>
-          <strong>Campeões: ${teamHtml(winnerOf(final))}</strong></p>
-        ${third?.status === 'done' ? `<p class="muted">3º lugar: ${teamHtml(winnerOf(third))}</p>` : ''}
-        ${season && !DB.event.stageClosed ? `
-          <wa-button size="s" variant="warning" data-action="close-stage">
-            <wa-icon slot="start" name="ranking-star"></wa-icon> Encerrar etapa · somar pontos
-          </wa-button>` : ''}
-        ${DB.event.stageClosed ? '<p class="hint"><wa-icon name="circle-check"></wa-icon> Pontos somados à temporada</p>' : ''}
-        <wa-button size="s" variant="brand" data-action="nav" data-view="bracket">
-          <wa-icon slot="start" name="trophy"></wa-icon> Ver chaveamento
-        </wa-button>
-      </div>`;
   } else if (next) {
     const chip = next.phase === 'ko'
       ? `<span class="chip chip-g">${koRoundLabel(next)}</span>`
