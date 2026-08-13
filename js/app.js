@@ -489,21 +489,11 @@ function renderSponsorList() {
 }
 
 function renderSettings() {
-  // config de sync (localStorage, fora do snapshot)
-  const sb = Sync.cfg();
-  if (document.activeElement?.id !== 'sb-url') {
-    $('#sb-url').value = sb.url ?? 'https://cjtzftkhtmpziyxyyqcx.supabase.co';
-  }
-  if (document.activeElement?.id !== 'sb-key') {
-    $('#sb-key').value = sb.key ?? 'sb_publishable_m7jjJExliY3NASa6jFIizw_Y0m6bYjH';
-  }
-  if (document.activeElement?.id !== 'sb-placar') $('#sb-placar').value = sb.placarUrl ?? '';
-  $('#sb-enabled').checked = !!sb.enabled;
   $('#dark-toggle').checked = document.documentElement.classList.contains('wa-dark');
   const email = Sync.userEmail();
   $('#auth-status').textContent = email
     ? `Conectado como ${email}`
-    : 'Sem login — sessão anônima deste navegador.';
+    : 'Sem login — modo offline deste navegador.';
   $('#btn-signout').hidden = !email;
 
   $('#tpl-list').innerHTML = DB.templates.map(t => {
@@ -1997,39 +1987,29 @@ document.addEventListener('click', e => {
     Repo.removeSponsor(id);
     renderAll();
   }
-  if (act === 'magic-link') {
+  if (act === 'sign-out') {
+    if (confirm('Sair da conta? Os dados continuam na nuvem — este navegador volta pra tela de login.')) {
+      Sync.signOut();
+    }
+  }
+  if (act === 'set-password') {
     (async () => {
-      const email = ($('#sb-email').value || '').trim();
-      const st = $('#auth-status');
-      if (!email.includes('@')) { st.textContent = 'Informe um email válido.'; return; }
-      if (!Sync.cfg().url || !Sync.cfg().key) { st.textContent = 'Salve URL e key do Supabase primeiro.'; return; }
-      if (location.protocol === 'file:') {
-        st.textContent = 'Magic link só funciona no app hospedado (GitHub Pages) — file:// não recebe o redirect.';
-        return;
-      }
-      st.textContent = 'Enviando…';
+      const pass = $('#sb-pass').value;
+      const st = $('#sync-status');
+      if (pass.length < 6) { st.textContent = 'Senha precisa de pelo menos 6 caracteres.'; return; }
       try {
-        await Sync.sendMagicLink(email);
-        st.textContent = `Link enviado pra ${email} — abre teu email e clica.`;
+        await Sync.setPassword(pass);
+        $('#sb-pass').value = '';
+        st.textContent = 'Senha salva ✓';
       } catch (err) {
         st.textContent = `Erro: ${err.message ?? err}`;
       }
     })();
   }
-  if (act === 'sign-out') {
-    if (confirm('Sair do login? Este navegador volta pra uma sessão anônima.')) Sync.signOut();
-  }
-  if (act === 'sync-save') {
-    Sync.saveCfg({
-      ...Sync.cfg(),
-      url: ($('#sb-url').value || '').trim(),
-      key: ($('#sb-key').value || '').trim(),
-      placarUrl: ($('#sb-placar').value || '').trim(),
-      enabled: $('#sb-enabled').checked,
-    });
-    if (Sync.enabled()) Sync.start();
-    else $('#sync-status').textContent = 'Sincronização desativada.';
-  }
+  if (act === 'auth-signin') authAction('in');
+  if (act === 'auth-signup') authAction('up');
+  if (act === 'auth-magic') authAction('magic');
+  if (act === 'auth-offline') $('#auth-gate').hidden = true;
   if (act === 'delete-template') {
     Repo.deleteTemplate(Number(el.dataset.tpl));
     renderAll();
@@ -2298,20 +2278,63 @@ setInterval(() => {
   if (changed) { renderGamesList(); renderMission(); Repo.persist(); }
 }, 60_000);
 
+/* ---------- auth (gate de login) ---------- */
+
+function authError(msg) {
+  const el = $('#auth-error');
+  el.textContent = msg;
+  el.hidden = !msg;
+}
+
+async function authAction(kind) {
+  const email = ($('#auth-email').value || '').trim();
+  const pass = $('#auth-pass').value;
+  authError('');
+  if (!email.includes('@')) { authError('Informe um email válido.'); return; }
+  if (kind !== 'magic' && pass.length < 6) { authError('Senha precisa de pelo menos 6 caracteres.'); return; }
+  try {
+    if (kind === 'in') {
+      await Sync.signInPassword(email, pass);
+      location.reload();
+    } else if (kind === 'up') {
+      const session = await Sync.signUp(email, pass);
+      if (session) location.reload();
+      else authError('Conta criada! Confirme o email que enviamos antes de entrar.');
+    } else {
+      await Sync.sendMagicLink(email);
+      authError(`Link enviado pra ${email} — abra neste dispositivo.`);
+    }
+  } catch (err) {
+    authError(err.message ?? String(err));
+  }
+}
+
 /* Boot: hidrata do IndexedDB; sem estado salvo, começa zerado.
-   Com sync configurado, conecta ao Supabase (snapshot remoto vence). */
+   Auth obrigatório: sem sessão, o gate cobre o app (com escape offline). */
 if (localStorage.getItem('reizinho.dark')) document.documentElement.classList.add('wa-dark');
 
 (async () => {
   await Repo.hydrate();
   renderAll();
-  // start também quando voltando do magic link (tokens no hash)
-  if (Sync.enabled() || location.hash.includes('access_token')) Sync.start();
+  try {
+    const user = await Sync.init();
+    if (user && !user.is_anonymous) {
+      Sync.start();
+    } else {
+      $('#auth-gate').hidden = false;
+    }
+  } catch (e) {
+    // CDN/rede fora: local-first continua — gate com opção offline
+    console.warn('Auth indisponível:', e);
+    $('#auth-gate').hidden = false;
+    $('#auth-offline').hidden = false;
+  }
 })();
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'court-name') addCourt();
   if (e.key === 'Enter' && e.target.id === 'dlg-court-name') dlgAddCourt();
+  if (e.key === 'Enter' && (e.target.id === 'auth-pass' || e.target.id === 'auth-email')) authAction('in');
 });
 
 const initialView = location.hash.slice(1);

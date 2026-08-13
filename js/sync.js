@@ -10,14 +10,22 @@
 const Sync = (() => {
   const CFG_KEY = 'reizinho.supabase';
   const SNAP_ID = 'default';
+  // Projeto padrão — multi-tenant: cada conta (auth) enxerga só o próprio snapshot (RLS)
+  const DEFAULT_URL = 'https://cjtzftkhtmpziyxyyqcx.supabase.co';
+  const DEFAULT_KEY = 'sb_publishable_m7jjJExliY3NASa6jFIizw_Y0m6bYjH';
   let client = null;
   let channel = null;
   let pushTimer = null;
   let lastRemoteTs = 0;
 
   const cfg = () => {
-    try { return JSON.parse(localStorage.getItem(CFG_KEY)) ?? {}; }
-    catch { return {}; }
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(CFG_KEY)) ?? {}; } catch {}
+    return {
+      enabled: true, ...saved,
+      url: saved.url || DEFAULT_URL,
+      key: saved.key || DEFAULT_KEY,
+    };
   };
   const saveCfg = c => localStorage.setItem(CFG_KEY, JSON.stringify(c));
   const enabled = () => { const c = cfg(); return !!(c.enabled && c.url && c.key); };
@@ -37,10 +45,16 @@ const Sync = (() => {
 
   function rememberUser(session) {
     userCache = session?.user ?? null;
-    // owner_id fica salvo na config — o link público usa mesmo offline
-    if (userCache?.id && cfg().ownerId !== userCache.id) {
+    if (!userCache?.id) return;
+    const prev = cfg().ownerId;
+    if (prev && prev !== userCache.id) {
+      // conta trocou neste navegador: estado local é de outra conta — limpa e recarrega
       saveCfg({ ...cfg(), ownerId: userCache.id });
+      Repo.wipe();
+      return;
     }
+    // owner_id fica salvo na config — o link público usa mesmo offline
+    if (prev !== userCache.id) saveCfg({ ...cfg(), ownerId: userCache.id });
   }
 
   async function ensureClient() {
@@ -52,17 +66,42 @@ const Sync = (() => {
       rememberUser(session);
       if (typeof renderAll === 'function') renderAll();
     });
-    let { data: { session } } = await client.auth.getSession();
-    if (!session) {
-      const { data, error } = await client.auth.signInAnonymously();
-      if (error) throw error;
-      session = data.session;
-    }
+    const { data: { session } } = await client.auth.getSession();
     rememberUser(session);
     return client;
   }
 
+  /* Boot do auth: conecta e devolve o usuário da sessão (ou null) */
+  async function init() {
+    await ensureClient();
+    return userCache;
+  }
+
+  async function signUp(email, password) {
+    await ensureClient();
+    const { data, error } = await client.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: location.origin + location.pathname },
+    });
+    if (error) throw error;
+    return data.session; // null = projeto exige confirmação de email
+  }
+
+  async function signInPassword(email, password) {
+    await ensureClient();
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data.session;
+  }
+
+  async function setPassword(password) {
+    await ensureClient();
+    const { error } = await client.auth.updateUser({ password });
+    if (error) throw error;
+  }
+
   const ownerId = () => cfg().ownerId ?? null;
+  const hasUser = () => !!userCache && !userCache.is_anonymous;
   const userEmail = () => (userCache && !userCache.is_anonymous) ? userCache.email : null;
 
   /* Magic link: organizador loga com email — mesmo usuário em todos os
@@ -80,7 +119,7 @@ const Sync = (() => {
     await ensureClient();
     await client.auth.signOut();
     saveCfg({ ...cfg(), ownerId: null });
-    location.reload();
+    Repo.wipe(); // dados ficam na nuvem; este navegador volta pra tela de login
   }
 
   function applyRemote(snapshot) {
@@ -94,7 +133,7 @@ const Sync = (() => {
     channel?.unsubscribe();
     channel = client.channel('event-snapshots')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'event_snapshots', filter: `id=eq.${SNAP_ID}` },
+        { event: '*', schema: 'public', table: 'event_snapshots', filter: `owner_id=eq.${cfg().ownerId}` },
         payload => {
           const ts = Date.parse(payload.new?.updated_at ?? 0);
           if (ts <= lastRemoteTs) return; // eco do próprio push
@@ -107,12 +146,13 @@ const Sync = (() => {
 
   /* Conecta, resolve boot (remoto existente vence) e assina realtime */
   async function start() {
-    if (!enabled()) return;
     setStatus('Conectando…', false);
     try {
       await ensureClient();
+      if (!hasUser()) return;
       const { data, error } = await client.from('event_snapshots')
-        .select('data, updated_at').eq('id', SNAP_ID).maybeSingle();
+        .select('data, updated_at')
+        .eq('owner_id', cfg().ownerId).eq('id', SNAP_ID).maybeSingle();
       if (error) throw error;
       if (data) {
         lastRemoteTs = Date.parse(data.updated_at);
@@ -130,7 +170,7 @@ const Sync = (() => {
 
   /* Empurra o snapshot atual (debounced) — chamado pelo Repo.persist */
   function push() {
-    if (!enabled() || !client) return;
+    if (!client || !hasUser()) return;
     clearTimeout(pushTimer);
     pushTimer = setTimeout(async () => {
       try {
@@ -160,7 +200,6 @@ const Sync = (() => {
   }
 
   async function removeLogo(path) {
-    if (!enabled()) return;
     await ensureClient();
     await client.storage.from('logos').remove([path]);
   }
@@ -168,6 +207,7 @@ const Sync = (() => {
   return {
     start, push, cfg, saveCfg, enabled, ownerId,
     uploadLogo, removeLogo,
+    init, hasUser, signUp, signInPassword, setPassword,
     sendMagicLink, signOut, userEmail,
   };
 })();

@@ -227,37 +227,26 @@
           <div id="season-list"></div>
         </div>
 
-        <h3 class="section-title"><wa-icon name="cloud"></wa-icon> Sincronização (Supabase)</h3>
+        <h3 class="section-title"><wa-icon name="user"></wa-icon> Conta</h3>
         <div class="panel sync-panel">
           <div class="form-stack">
-            <wa-input id="sb-url" label="Project URL" placeholder="https://xxxx.supabase.co"></wa-input>
-            <wa-input id="sb-key" label="Anon key" type="password"></wa-input>
-            <wa-input id="sb-placar" label="URL pública do placar (vazio = GitHub Pages)"
-              placeholder="https://liga.rcode.pro/"></wa-input>
-            <wa-checkbox id="sb-enabled">Ativar sincronização</wa-checkbox>
-            <div class="sync-actions">
-              <wa-button variant="brand" data-action="sync-save">
-                <wa-icon slot="start" name="cloud-arrow-up"></wa-icon> Salvar e conectar
-              </wa-button>
-              <span id="sync-status" class="muted"></span>
-            </div>
-
-            <label class="field-label">Login do organizador (multi-dispositivo)</label>
-            <div class="sync-actions">
-              <wa-input id="sb-email" type="email" placeholder="seu@email.com" size="s" class="grow"></wa-input>
-              <wa-button size="s" appearance="outlined" data-action="magic-link">
-                <wa-icon slot="start" name="envelope"></wa-icon> Enviar magic link
-              </wa-button>
-            </div>
             <div class="sync-actions" id="auth-row">
               <span id="auth-status" class="muted"></span>
               <wa-button size="s" appearance="plain" variant="danger" data-action="sign-out" id="btn-signout" hidden>
                 Sair
               </wa-button>
             </div>
+            <label class="field-label">Trocar senha</label>
+            <div class="sync-actions">
+              <wa-input id="sb-pass" type="password" placeholder="nova senha (mín. 6)" size="s" class="grow"></wa-input>
+              <wa-button size="s" appearance="outlined" data-action="set-password">Salvar senha</wa-button>
+            </div>
+            <div class="sync-actions">
+              <span id="sync-status" class="muted"></span>
+            </div>
             <p class="muted sync-hint">
-              Rode <code>db/sync-snapshot.sql</code> no SQL Editor do projeto e ative
-              Anonymous sign-in (Auth → Providers). Local-first: sem internet, tudo continua funcionando.
+              Seus dados sincronizam sozinhos na nuvem — entre com a mesma conta em
+              qualquer dispositivo. Sem internet, tudo continua funcionando localmente.
             </p>
           </div>
         </div>
@@ -504,6 +493,25 @@
       <wa-icon slot="start" name="circle-check"></wa-icon> Salvar resultado
     </wa-button>
   </wa-dialog>
+
+  <!-- Gate de login: cobre o app até ter sessão -->
+  <div id="auth-gate" hidden>
+    <div class="auth-card">
+      <div class="auth-badge"><wa-icon name="trophy"></wa-icon></div>
+      <h2>Bem-vindo</h2>
+      <p class="muted">Entre na sua conta ou crie uma nova pra gerenciar seus torneios.</p>
+      <wa-input id="auth-email" type="email" label="Email" placeholder="voce@email.com"
+        autocapitalize="off" autocorrect="off" spellcheck="false"></wa-input>
+      <wa-input id="auth-pass" type="password" label="Senha" placeholder="mínimo 6 caracteres"></wa-input>
+      <p class="auth-error" id="auth-error" hidden></p>
+      <wa-button variant="brand" size="l" data-action="auth-signin" id="auth-signin-btn">Entrar</wa-button>
+      <wa-button appearance="outlined" size="l" data-action="auth-signup">Criar conta</wa-button>
+      <wa-button appearance="plain" size="s" data-action="auth-magic">Esqueci a senha — entrar por link no email</wa-button>
+      <wa-button appearance="plain" size="s" data-action="auth-offline" id="auth-offline" hidden>
+        Sem internet — continuar offline
+      </wa-button>
+    </div>
+  </div>
 
   <script src="js/data.js"></script>
   <script src="js/repo.js"></script>

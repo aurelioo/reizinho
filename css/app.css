@@ -911,3 +911,31 @@ html.wa-dark .form-error { color: #fca5a5; }
   font-size: .82rem; color: var(--ink-quiet); line-height: 1.6;
   max-height: 9rem; overflow-y: auto;
 }
+
+/* ====== gate de login ====== */
+#auth-gate {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  background: var(--wa-color-surface-lowered, #f4f1ea);
+}
+#auth-gate[hidden] { display: none; }
+.auth-card {
+  width: min(380px, 100%);
+  display: flex; flex-direction: column; gap: .8rem;
+  padding: 2rem 1.75rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: 0 12px 40px rgb(0 0 0 / .08);
+}
+.auth-card h2 { margin: 0; text-align: center; }
+.auth-card > p.muted { margin: 0 0 .4rem; text-align: center; font-size: .88rem; }
+.auth-badge {
+  width: 3rem; height: 3rem; margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 1.3rem;
+  background: var(--brand-soft); color: var(--brand);
+}
+.auth-error {
+  margin: 0; font-size: .82rem; text-align: center;
+  color: var(--wa-color-danger-fill-loud, #b91c1c);
+}
