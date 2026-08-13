@@ -886,3 +886,10 @@ html.wa-dark .form-error { color: #fca5a5; }
 #draw-btn::part(base), #draw-next::part(base) {
   justify-content: center; font-weight: 700;
 }
+
+/* lista corrida de quem entra no sorteio */
+.draw-names {
+  margin: 0; text-align: center;
+  font-size: .82rem; color: var(--ink-quiet); line-height: 1.6;
+  max-height: 9rem; overflow-y: auto;
+}
